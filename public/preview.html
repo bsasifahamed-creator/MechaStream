@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Live Preview</title>
+  <style id="dynamic-style">
+    :root {
+      --bg: white;
+      --color: black;
+    }
+    body {
+      margin: 0;
+      font-family: system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+      background: var(--bg);
+      color: var(--color);
+      transition: background .2s, color .2s;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <div id="error" style="position:fixed;bottom:0;left:0;right:0;background:#ffecec;color:#900;padding:8px;font-family:monospace;display:none;max-height:100px;overflow-y:auto;border-top:1px solid #fcc;"></div>
+
+  <script type="module">
+    // Helper to apply theme / background
+    function applySettings({ backgroundColor, darkMode }) {
+      const style = document.getElementById('dynamic-style');
+      if (darkMode) {
+        style.textContent = `
+          :root {
+            --bg: ${backgroundColor || '#1e1e1e'};
+            --color: #f0f0f0;
+          }
+          body {
+            margin: 0;
+            font-family: system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+            background: var(--bg);
+            color: var(--color);
+            transition: background .2s, color .2s;
+          }
+        `;
+      } else {
+        style.textContent = `
+          :root {
+            --bg: ${backgroundColor || '#ffffff'};
+            --color: #1e1e1e;
+          }
+          body {
+            margin: 0;
+            font-family: system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+            background: var(--bg);
+            color: var(--color);
+            transition: background .2s, color .2s;
+          }
+        `;
+      }
+    }
+
+    // Override console to capture logs
+    const originalConsole = {
+      log: console.log,
+      error: console.error,
+      warn: console.warn,
+      info: console.info
+    };
+
+    function logToParent(type, ...args) {
+      window.parent.postMessage({
+        type: 'console',
+        level: type,
+        message: args.map(arg => 
+          typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+        ).join(' ')
+      }, '*');
+    }
+
+    console.log = (...args) => {
+      originalConsole.log(...args);
+      logToParent('log', ...args);
+    };
+    console.error = (...args) => {
+      originalConsole.error(...args);
+      logToParent('error', ...args);
+    };
+    console.warn = (...args) => {
+      originalConsole.warn(...args);
+      logToParent('warn', ...args);
+    };
+    console.info = (...args) => {
+      originalConsole.info(...args);
+      logToParent('info', ...args);
+    };
+
+    window.addEventListener('message', async (e) => {
+      const { code, deps = [], settings = {} } = e.data;
+      applySettings(settings);
+
+      const errorEl = document.getElementById('error');
+      errorEl.style.display = 'none';
+      errorEl.textContent = '';
+
+      // Clear previous content
+      document.getElementById('root').innerHTML = '';
+
+      try {
+        // Build import statements for dependencies via CDN as ES modules
+        let importLines = '';
+        const loadedModules = {};
+        
+        for (const pkg of deps) {
+          if (!pkg.trim()) continue;
+          
+          // Safe name: replace non-alphanum with _
+          const varName = pkg.replace(/\W/g, '_');
+          
+          // Try multiple CDNs with fallbacks
+          const cdnUrls = [
+            `https://cdn.skypack.dev/${pkg}`,
+            `https://unpkg.com/${pkg}@latest`,
+            `https://cdn.jsdelivr.net/npm/${pkg}@latest`
+          ];
+          
+          let moduleLoaded = false;
+          for (const cdnUrl of cdnUrls) {
+            try {
+              const module = await import(cdnUrl);
+              loadedModules[varName] = module;
+              importLines += `const ${varName} = await import('${cdnUrl}');\n`;
+              moduleLoaded = true;
+              break;
+            } catch (err) {
+              console.warn(`Failed to load ${pkg} from ${cdnUrl}:`, err.message);
+            }
+          }
+          
+          if (!moduleLoaded) {
+            throw new Error(`Failed to load dependency: ${pkg}`);
+          }
+        }
+
+        // Wrap user code to capture default export
+        const wrapped = `
+          ${importLines}
+          
+          // User code
+          ${code}
+
+          // Determine default export
+          let Root = null;
+          if (typeof defaultExport !== 'undefined') {
+            Root = defaultExport;
+          } else if (typeof App !== 'undefined') {
+            Root = App;
+          } else if (typeof exports !== 'undefined' && exports.default) {
+            Root = exports.default;
+          }
+
+          if (!Root) {
+            throw new Error('No default export component found. Export a component as default.');
+          }
+
+          // Get React and ReactDOM from loaded modules or global scope
+          const React = loadedModules.react?.default || loadedModules.React?.default || (typeof React !== 'undefined' ? React : null);
+          const ReactDOM = loadedModules.react_dom?.default || loadedModules.ReactDOM?.default || (typeof ReactDOM !== 'undefined' ? ReactDOM : null);
+
+          if (!React || !ReactDOM) {
+            throw new Error('React or ReactDOM not available. Include "react" and "react-dom" in dependencies.');
+          }
+
+          // Render
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(React.createElement(Root, null));
+        `;
+
+        // Create blob and import it as module
+        const blob = new Blob([wrapped], { type: 'text/javascript' });
+        const url = URL.createObjectURL(blob);
+        await import(url);
+        URL.revokeObjectURL(url);
+        
+        // Notify parent of successful render
+        window.parent.postMessage({
+          type: 'preview-ready',
+          success: true
+        }, '*');
+        
+      } catch (err) {
+        errorEl.style.display = 'block';
+        errorEl.textContent = 'Preview error: ' + err.toString();
+        
+        // Notify parent of error
+        window.parent.postMessage({
+          type: 'preview-error',
+          error: err.toString()
+        }, '*');
+      }
+    });
+
+    // Notify parent that preview is ready
+    window.parent.postMessage({
+      type: 'preview-loaded',
+      success: true
+    }, '*');
+  </script>
+</body>
+</html> 

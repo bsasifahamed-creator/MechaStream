@@ -1,0 +1,13 @@
+export default function HelloPage() {
+  return (
+    <html>
+      <head>
+        <title>Hello World</title>
+      </head>
+      <body>
+        <h1>Hello World!</h1>
+        <p>If you can see this, Next.js is working.</p>
+      </body>
+    </html>
+  )
+} 

@@ -1,0 +1,654 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* JetBrains Mono loaded via <link> in layout to avoid blocking CSS if font request fails */
+
+/* Global scrollbar styling for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1f2937; /* gray-800 */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4b5563; /* gray-600 */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6b7280; /* gray-500 */
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 #1f2937;
+}
+
+@layer base {
+  /* Global reset and overflow prevention */
+  *, *::before, *::after { 
+    box-sizing: border-box; 
+  }
+  
+  html, body { 
+    margin: 0; 
+    padding: 0; 
+    min-height: 100vh; 
+    width: 100%;
+    overflow-x: hidden; /* Hide accidental horizontal overflow */
+  }
+  
+  /* Root wrapper to prevent overflow */
+  #__next, .app-wrapper {
+    max-width: 100%;
+    width: 100%;
+    position: relative;
+    overflow-x: hidden;
+    background-color: #0b1220; /* match body to remove white edges */
+  }
+
+  /* Home/IDE/Export: no forced dark bg; let page set its own */
+  .app-wrapper-fullbleed {
+    background-color: transparent;
+  }
+  
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  /* Use dark background to avoid white flash/edges on scroll bounce */
+  html {
+    background-color: #0b1220; /* near gray-900 */
+    color-scheme: dark;
+    overscroll-behavior: none;
+  }
+
+  body {
+    background-color: #111827; /* gray-900 fallback if Tailwind not applied */
+    color: #fff;
+    @apply bg-gray-900 text-white;
+    /* Prevent any draggable behavior */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  /* Allow text selection in specific areas */
+  .code-editor, .chat-input, textarea, input {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+
+  /* Prevent dragging on all elements */
+  * {
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+  }
+  
+  /* Debug outline for overflow detection - remove in production */
+  .overflow-debug * { 
+    outline: 1px dashed rgba(255,0,0,0.4); 
+  }
+  
+  /* Prevent common overflow causes */
+  .container, .wrapper, .main, .content {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  
+  /* Fix for flex/grid items that might overflow */
+  .flex, .grid {
+    min-width: 0;
+    max-width: 100%;
+  }
+  
+  /* Prevent images from overflowing */
+  img, svg, video, canvas {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Fix for text that might overflow */
+  pre, code {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  
+  /* Fix for tables that might overflow */
+  table {
+    max-width: 100%;
+    overflow-x: auto;
+    display: block;
+  }
+
+  /* Ensure dark theme works properly */
+  .dark {
+    @apply bg-gray-900 text-white;
+  }
+
+  /* Terminal specific styles */
+  .terminal-output {
+    font-family: 'JetBrains Mono', monospace;
+    background-color: #1a1a1a;
+    color: #00ff00;
+  }
+
+  /* Code editor specific styles */
+  .code-editor {
+    font-family: 'JetBrains Mono', monospace;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+  }
+
+  /* Chat interface styles */
+  .chat-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  /* Navigation styles */
+  .nav-item {
+    transition: all 0.3s ease;
+  }
+
+  .nav-item:hover {
+    transform: translateY(-2px);
+  }
+
+  /* Button styles */
+  .btn-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transition: all 0.3s ease;
+  }
+
+  .btn-gradient:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+  }
+
+  /* Real-time Terminal Styles */
+  .realtime-terminal {
+    @apply bg-gray-900 border border-gray-700 rounded-lg overflow-hidden shadow-2xl;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+  }
+
+  .terminal-header {
+    @apply flex items-center justify-between p-3 bg-gray-800 border-b border-gray-700;
+    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+  }
+
+  .terminal-output {
+    @apply p-4 h-64 overflow-auto;
+    background: linear-gradient(180deg, #0f1419 0%, #1a1a1a 100%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .terminal-input {
+    @apply p-3 border-t border-gray-700;
+    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+  }
+
+  /* Terminal Output Types */
+  .terminal-output-normal {
+    color: #00ff00;
+  }
+
+  .terminal-output-error {
+    color: #ff4444;
+    font-weight: 500;
+  }
+
+  .terminal-output-success {
+    color: #44ff44;
+    font-weight: 500;
+  }
+
+  .terminal-output-warning {
+    color: #ffaa00;
+    font-weight: 500;
+  }
+
+  .terminal-output-info {
+    color: #44aaff;
+    font-weight: 500;
+  }
+
+  .terminal-output-system {
+    color: #ff44ff;
+    font-weight: 600;
+  }
+
+  .terminal-output-command {
+    color: #ffff44;
+    font-weight: 600;
+  }
+
+  /* Terminal Animations */
+  .terminal-typing {
+    animation: typing 0.1s ease-in-out;
+  }
+
+  @keyframes typing {
+    0% { opacity: 0; transform: translateY(2px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .terminal-cursor {
+    animation: blink 1s infinite;
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  /* Process Status Indicators */
+  .process-executing {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .process-stopped {
+    animation: shake 0.5s ease-in-out;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+  }
+
+  /* Command History Styles */
+  .command-history-item {
+    @apply p-2 rounded hover:bg-gray-800 transition-colors cursor-pointer;
+  }
+
+  .command-history-item:hover {
+    @apply bg-gray-800;
+  }
+
+  /* Auto-completion Styles */
+  .autocomplete-suggestions {
+    @apply absolute top-full left-0 right-0 bg-gray-800 border border-gray-700 rounded-b-lg max-h-32 overflow-y-auto z-10;
+  }
+
+  .autocomplete-suggestion {
+    @apply p-2 hover:bg-gray-700 cursor-pointer;
+  }
+
+  .autocomplete-suggestion.active {
+    @apply bg-blue-600 text-white;
+  }
+
+  /* Terminal Theme Variants */
+  .terminal-light {
+    @apply bg-gray-100 border-gray-300;
+  }
+
+  .terminal-light .terminal-header {
+    @apply bg-gray-200 border-gray-300;
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  }
+
+  .terminal-light .terminal-output {
+    @apply bg-gray-50;
+    background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
+    color: #059669;
+  }
+
+  .terminal-light .terminal-input {
+    @apply bg-gray-200 border-gray-300;
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  }
+
+  /* Enhanced Button Styles */
+  .terminal-btn {
+    @apply p-1 rounded transition-all duration-200;
+  }
+
+  .terminal-btn:hover {
+    @apply transform scale-105;
+  }
+
+  .terminal-btn-primary {
+    @apply text-green-400 hover:text-green-300;
+  }
+
+  .terminal-btn-secondary {
+    @apply text-gray-400 hover:text-gray-200;
+  }
+
+  .terminal-btn-danger {
+    @apply text-red-400 hover:text-red-300;
+  }
+
+  .terminal-btn-warning {
+    @apply text-yellow-400 hover:text-yellow-300;
+  }
+
+  /* Settings Panel Styles */
+  .settings-panel {
+    @apply p-3 border-b border-gray-700;
+    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+  }
+
+  .settings-panel-light {
+    @apply bg-gray-200 border-gray-300;
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  }
+
+  /* Scrollbar Styles */
+  .terminal-output::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .terminal-output::-webkit-scrollbar-track {
+    @apply bg-gray-800;
+  }
+
+  .terminal-output::-webkit-scrollbar-thumb {
+    @apply bg-gray-600 rounded;
+  }
+
+  .terminal-output::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500;
+  }
+
+  /* Loading States */
+  .terminal-loading {
+    @apply flex items-center space-x-2;
+  }
+
+  .terminal-loading-spinner {
+    @apply animate-spin rounded-full h-4 w-4 border-b-2 border-green-400;
+  }
+
+  /* Status Indicators */
+  .status-indicator {
+    @apply flex items-center space-x-1;
+  }
+
+  .status-executing {
+    @apply text-green-400;
+  }
+
+  .status-stopped {
+    @apply text-red-400;
+  }
+
+  .status-ready {
+    @apply text-blue-400;
+  }
+
+  /* Enhanced Input Styles */
+  .terminal-input-field {
+    @apply flex-1 bg-transparent font-mono text-sm outline-none;
+    transition: all 0.2s ease;
+  }
+
+  .terminal-input-field:focus {
+    @apply ring-2 ring-green-400 ring-opacity-50;
+  }
+
+  .terminal-input-field:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  /* Command Prompt Styles */
+  .command-prompt {
+    @apply font-mono text-sm;
+    color: #00ff00;
+  }
+
+  .command-prompt-light {
+    color: #059669;
+  }
+
+  /* Output Line Styles */
+  .output-line {
+    @apply mb-1 whitespace-pre-wrap;
+    animation: fadeIn 0.1s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(1px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Timestamp Styles */
+  .output-timestamp {
+    @apply text-gray-500 text-xs;
+  }
+
+  /* File System Icons */
+  .file-icon {
+    @apply inline-block mr-2;
+  }
+
+  .file-icon-file {
+    color: #3b82f6;
+  }
+
+  .file-icon-folder {
+    color: #f59e0b;
+  }
+
+  .file-icon-executable {
+    color: #10b981;
+  }
+
+  /* Process Control */
+  .process-controls {
+    @apply flex items-center space-x-2;
+  }
+
+  .process-stop-btn {
+    @apply p-1 text-red-400 hover:text-red-300 transition-colors;
+    animation: pulse 2s infinite;
+  }
+
+  /* Copy/Download Feedback */
+  .action-feedback {
+    @apply absolute top-2 right-2 px-3 py-1 rounded text-sm font-medium;
+    animation: slideIn 0.3s ease-out;
+  }
+
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  .feedback-success {
+    @apply bg-green-500 text-white;
+  }
+
+  .feedback-info {
+    @apply bg-blue-500 text-white;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-accent {
+    @apply bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+  }
+  
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-300 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  }
+  
+  .sidebar {
+    @apply bg-white border-r border-gray-200 w-64 h-screen fixed left-0 top-0 z-40;
+  }
+  
+  .main-content {
+    @apply ml-64 p-6;
+  }
+  
+  .code-editor {
+    @apply font-mono text-sm bg-gray-900 text-gray-100 rounded-lg p-4 overflow-auto h-full;
+  }
+  
+  .ai-prompt {
+    @apply bg-gradient-to-r from-blue-500 to-purple-600 border border-blue-200 rounded-lg p-4;
+  }
+  
+  .loading-spinner {
+    @apply animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500;
+  }
+
+  /* WebContainer Terminal Styles */
+  .webcontainer-terminal {
+    @apply bg-gray-900 border border-gray-700 rounded-lg overflow-hidden;
+  }
+
+  .terminal-header {
+    @apply flex items-center justify-between p-3 bg-gray-800 border-b border-gray-700;
+  }
+
+  .terminal-output {
+    @apply p-4 h-64 overflow-auto;
+  }
+
+  .terminal-input {
+    @apply p-3 border-t border-gray-700;
+  }
+
+  /* Chat Interface Styles */
+  .chat-message {
+    @apply mb-4 p-3 rounded-lg;
+  }
+
+  .chat-message.user {
+    @apply bg-blue-500 text-white ml-auto max-w-xs;
+  }
+
+  .chat-message.bot {
+    @apply bg-gray-200 text-gray-800 mr-auto max-w-xs;
+  }
+
+  /* Code Editor Styles */
+  .code-editor-wrapper {
+    @apply bg-gray-900 rounded-lg overflow-hidden;
+  }
+
+  .code-editor-header {
+    @apply flex items-center justify-between p-3 bg-gray-800 border-b border-gray-700;
+  }
+
+  .code-editor-content {
+    @apply p-4 h-96 overflow-auto;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent;
+  }
+  
+  .glass-effect {
+    @apply bg-white/80 backdrop-blur-sm border border-white/20;
+  }
+  
+  .shadow-glow {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+  }
+  
+  /* Utility classes for overflow prevention */
+  .no-overflow {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+  
+  .full-width {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .constrain-width {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Debug styles */
+  .debug-border {
+    border: 2px solid red;
+  }
+
+  .debug-bg {
+    background-color: rgba(255, 0, 0, 0.1);
+  }
+
+  /* Terminal specific utilities */
+  .terminal-text-green {
+    color: #00ff00;
+  }
+
+  .terminal-text-red {
+    color: #ff4444;
+  }
+
+  .terminal-text-yellow {
+    color: #ffaa00;
+  }
+
+  .terminal-text-blue {
+    color: #44aaff;
+  }
+
+  .terminal-text-purple {
+    color: #ff44ff;
+  }
+
+  .terminal-text-cyan {
+    color: #44ffff;
+  }
+
+  /* Animation utilities */
+  .animate-typing {
+    animation: typing 0.1s ease-in-out;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-bounce-slow {
+    animation: bounce 2s infinite;
+  }
+
+  /* Responsive terminal */
+  .terminal-responsive {
+    @apply w-full max-w-full;
+  }
+
+  @media (max-width: 768px) {
+    .terminal-responsive {
+      @apply text-xs;
+    }
+  }
+} 

@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Real App Builder - Working Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-50 to-blue-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-5xl font-bold text-gray-900 mb-4">
+                🚀 Real App Builder
+            </h1>
+            <p class="text-xl text-gray-600">
+                Describe your app → Get a complete, running application → Modify with natural language
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Panel - App Generation -->
+            <div class="space-y-6">
+                <!-- App Generator -->
+                <div class="bg-white rounded-xl shadow-xl p-6">
+                    <h2 class="text-2xl font-semibold mb-4">🎯 Create Your App</h2>
+                    
+                    <textarea
+                        id="promptInput"
+                        placeholder="e.g., Create a restaurant website with menu, online ordering, and admin dashboard..."
+                        class="w-full h-32 p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    ></textarea>
+
+                    <button
+                        id="buildButton"
+                        class="mt-4 w-full bg-purple-600 text-white py-4 px-6 rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        🚀 Build Complete App
+                    </button>
+                </div>
+
+                <!-- App Modifier -->
+                <div id="modifierSection" class="bg-white rounded-xl shadow-xl p-6 hidden">
+                    <h2 class="text-2xl font-semibold mb-4">🔧 Modify Your App</h2>
+                    
+                    <input
+                        id="modifyInput"
+                        type="text"
+                        placeholder="e.g., Add a contact form, change colors to blue, add user authentication..."
+                        class="w-full p-4 border border-gray-300 rounded-lg mb-4"
+                    />
+
+                    <div class="space-y-2">
+                        <button
+                            onclick="modifyApp('Add user authentication with login/signup')"
+                            class="w-full px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                        >
+                            🔐 Add Authentication
+                        </button>
+                        <button
+                            onclick="modifyApp('Add a shopping cart and checkout system')"
+                            class="w-full px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
+                        >
+                            🛒 Add Shopping Cart
+                        </button>
+                        <button
+                            onclick="modifyApp('Add dark mode toggle')"
+                            class="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                        >
+                            🌙 Add Dark Mode
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Deploy Section -->
+                <div id="deploySection" class="bg-white rounded-xl shadow-xl p-6 hidden">
+                    <h2 class="text-2xl font-semibold mb-4">🚀 Deploy Your App</h2>
+                    
+                    <button
+                        onclick="deployApp()"
+                        class="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+                    >
+                        🌐 Deploy to Vercel
+                    </button>
+                    
+                    <p class="text-sm text-gray-600 mt-2">
+                        Get a live URL for your app
+                    </p>
+                </div>
+            </div>
+
+            <!-- Center Panel - Live App -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-2xl font-semibold" id="previewTitle">
+                            👁️ Live App Preview
+                        </h2>
+                        <div id="statusIndicator" class="hidden">
+                            <span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
+                                🟢 Running
+                            </span>
+                        </div>
+                    </div>
+
+                    <div id="previewContainer">
+                        <div class="h-96 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <div class="text-center">
+                                <div class="text-6xl mb-4">🏗️</div>
+                                <p class="text-gray-500 text-lg">Build your first app to see it here</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- App Info -->
+                    <div id="appInfo" class="mt-4 p-4 bg-gray-50 rounded-lg hidden">
+                        <h3 class="font-semibold mb-2">App Details:</h3>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="font-medium">Files:</span> <span id="fileCount">0</span>
+                            </div>
+                            <div>
+                                <span class="font-medium">Dependencies:</span> <span id="depCount">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- App Gallery -->
+        <div id="appGallery" class="mt-12 hidden">
+            <h2 class="text-2xl font-semibold mb-6">📱 Your Apps</h2>
+            <div id="appGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Apps will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentApp = null;
+        let apps = [];
+
+        // Mock API functions (in real app, these would call your backend)
+        async function generateCompleteApp() {
+            const prompt = document.getElementById('promptInput').value;
+            if (!prompt.trim()) {
+                alert('Please describe your app!');
+                return;
+            }
+
+            const button = document.getElementById('buildButton');
+            button.textContent = '🏗️ Building App...';
+            button.disabled = true;
+
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // Create mock app data
+            const newApp = {
+                id: Date.now().toString(),
+                name: `App ${apps.length + 1}`,
+                description: prompt,
+                files: {
+                    'pages/index.js': generateMockAppCode(prompt),
+                    'styles/globals.css': 'body { margin: 0; font-family: system-ui; }',
+                    'package.json': JSON.stringify({ name: 'my-app', dependencies: {} }, null, 2)
+                },
+                dependencies: ['react', 'react-dom'],
+                status: 'running',
+                url: '#'
+            };
+
+            currentApp = newApp;
+            apps.push(newApp);
+            
+            updateUI();
+            button.textContent = '🚀 Build Complete App';
+            button.disabled = false;
+            
+            alert('Your app is ready! 🚀');
+        }
+
+        function generateMockAppCode(prompt) {
+            if (prompt.toLowerCase().includes('restaurant')) {
+                return `
+import React from 'react';
+
+export default function Home() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100">
+      <nav className="bg-white shadow-lg">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex justify-between items-center py-4">
+            <h1 className="text-2xl font-bold text-orange-600">🍕 Delicious Restaurant</h1>
+            <div className="space-x-4">
+              <a href="#menu" className="text-gray-700 hover:text-orange-600">Menu</a>
+              <a href="#contact" className="text-gray-700 hover:text-orange-600">Contact</a>
+              <a href="#order" className="bg-orange-600 text-white px-4 py-2 rounded-lg">Order Now</a>
+            </div>
+          </div>
+        </div>
+      </nav>
+      
+      <main className="max-w-6xl mx-auto px-4 py-12">
+        <section className="text-center mb-16">
+          <h2 className="text-5xl font-bold text-gray-900 mb-4">Welcome to Our Restaurant</h2>
+          <p className="text-xl text-gray-600 mb-8">Experience the finest cuisine in town</p>
+          <button className="bg-orange-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-orange-700">
+            View Our Menu
+          </button>
+        </section>
+        
+        <section id="menu" className="mb-16">
+          <h3 className="text-3xl font-bold text-center mb-8">Our Menu</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h4 className="text-xl font-semibold mb-2">🍕 Margherita Pizza</h4>
+              <p className="text-gray-600 mb-4">Fresh mozzarella, tomato sauce, basil</p>
+              <p className="text-2xl font-bold text-orange-600">$18.99</p>
+            </div>
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h4 className="text-xl font-semibold mb-2">🍝 Spaghetti Carbonara</h4>
+              <p className="text-gray-600 mb-4">Eggs, cheese, pancetta, black pepper</p>
+              <p className="text-2xl font-bold text-orange-600">$16.99</p>
+            </div>
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h4 className="text-xl font-semibold mb-2">🥗 Caesar Salad</h4>
+              <p className="text-gray-600 mb-4">Romaine lettuce, parmesan, croutons</p>
+              <p className="text-2xl font-bold text-orange-600">$12.99</p>
+            </div>
+          </div>
+        </section>
+        
+        <section id="contact" className="text-center">
+          <h3 className="text-3xl font-bold mb-8">Contact Us</h3>
+          <p className="text-lg text-gray-600 mb-4">123 Restaurant Street, Food City, FC 12345</p>
+          <p className="text-lg text-gray-600 mb-4">📞 (555) 123-4567</p>
+          <p className="text-lg text-gray-600">📧 info@deliciousrestaurant.com</p>
+        </section>
+      </main>
+    </div>
+  );
+}`;
+            } else if (prompt.toLowerCase().includes('portfolio')) {
+                return `
+import React from 'react';
+
+export default function Home() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100">
+      <nav className="bg-white shadow-lg">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex justify-between items-center py-4">
+            <h1 className="text-2xl font-bold text-blue-600">👨‍💻 John Developer</h1>
+            <div className="space-x-4">
+              <a href="#about" className="text-gray-700 hover:text-blue-600">About</a>
+              <a href="#projects" className="text-gray-700 hover:text-blue-600">Projects</a>
+              <a href="#contact" className="bg-blue-600 text-white px-4 py-2 rounded-lg">Contact</a>
+            </div>
+          </div>
+        </div>
+      </nav>
+      
+      <main className="max-w-6xl mx-auto px-4 py-12">
+        <section id="about" className="text-center mb-16">
+          <h2 className="text-5xl font-bold text-gray-900 mb-4">Hi, I'm John</h2>
+          <p className="text-xl text-gray-600 mb-8">Full-stack developer passionate about creating amazing web experiences</p>
+          <div className="flex justify-center space-x-4">
+            <span className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full">React</span>
+            <span className="bg-green-100 text-green-700 px-4 py-2 rounded-full">Node.js</span>
+            <span className="bg-purple-100 text-purple-700 px-4 py-2 rounded-full">TypeScript</span>
+          </div>
+        </section>
+        
+        <section id="projects" className="mb-16">
+          <h3 className="text-3xl font-bold text-center mb-8">My Projects</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h4 className="text-xl font-semibold mb-2">🚀 E-commerce Platform</h4>
+              <p className="text-gray-600 mb-4">Built with React, Node.js, and MongoDB</p>
+              <div className="flex space-x-2">
+                <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-sm">React</span>
+                <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-sm">Node.js</span>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h4 className="text-xl font-semibold mb-2">📱 Mobile App</h4>
+              <p className="text-gray-600 mb-4">React Native app for task management</p>
+              <div className="flex space-x-2">
+                <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-sm">React Native</span>
+                <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-sm">Firebase</span>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        <section id="contact" className="text-center">
+          <h3 className="text-3xl font-bold mb-8">Get In Touch</h3>
+          <p className="text-lg text-gray-600 mb-4">📧 john@developer.com</p>
+          <p className="text-lg text-gray-600 mb-4">📱 (555) 123-4567</p>
+          <p className="text-lg text-gray-600">📍 San Francisco, CA</p>
+        </section>
+      </main>
+    </div>
+  );
+}`;
+            } else {
+                return `
+import React from 'react';
+
+export default function Home() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100">
+      <nav className="bg-white shadow-lg">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex justify-between items-center py-4">
+            <h1 className="text-2xl font-bold text-green-600">🌟 My Amazing App</h1>
+            <div className="space-x-4">
+              <a href="#features" className="text-gray-700 hover:text-green-600">Features</a>
+              <a href="#about" className="text-gray-700 hover:text-green-600">About</a>
+              <a href="#contact" className="bg-green-600 text-white px-4 py-2 rounded-lg">Get Started</a>
+            </div>
+          </div>
+        </div>
+      </nav>
+      
+      <main className="max-w-6xl mx-auto px-4 py-12">
+        <section className="text-center mb-16">
+          <h2 className="text-5xl font-bold text-gray-900 mb-4">Welcome to My App</h2>
+          <p className="text-xl text-gray-600 mb-8">A beautiful application built with modern web technologies</p>
+          <button className="bg-green-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-green-700">
+            Get Started
+          </button>
+        </section>
+        
+        <section id="features" className="mb-16">
+          <h3 className="text-3xl font-bold text-center mb-8">Features</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white rounded-lg shadow-lg p-6 text-center">
+              <div className="text-4xl mb-4">⚡</div>
+              <h4 className="text-xl font-semibold mb-2">Fast Performance</h4>
+              <p className="text-gray-600">Lightning-fast loading times and smooth interactions</p>
+            </div>
+            <div className="bg-white rounded-lg shadow-lg p-6 text-center">
+              <div className="text-4xl mb-4">🎨</div>
+              <h4 className="text-xl font-semibold mb-2">Beautiful Design</h4>
+              <p className="text-gray-600">Modern, responsive design that looks great on all devices</p>
+            </div>
+            <div className="bg-white rounded-lg shadow-lg p-6 text-center">
+              <div className="text-4xl mb-4">🔒</div>
+              <h4 className="text-xl font-semibold mb-2">Secure</h4>
+              <p className="text-gray-600">Built with security best practices to protect your data</p>
+            </div>
+          </div>
+        </section>
+        
+        <section id="about" className="text-center">
+          <h3 className="text-3xl font-bold mb-8">About This App</h3>
+          <p className="text-lg text-gray-600 mb-4">This is a demonstration of the Real App Builder</p>
+          <p className="text-lg text-gray-600">Built with React, Next.js, and Tailwind CSS</p>
+        </section>
+      </main>
+    </div>
+  );
+}`;
+            }
+        }
+
+        function modifyApp(modificationPrompt) {
+            if (!currentApp) {
+                alert('No app to modify!');
+                return;
+            }
+
+            alert('App modification feature would be implemented here!');
+            // In the real app, this would call the /api/modify-app endpoint
+        }
+
+        function deployApp() {
+            if (!currentApp) {
+                alert('No app to deploy!');
+                return;
+            }
+
+            alert('App deployment feature would be implemented here!');
+            // In the real app, this would call the /api/deploy-app endpoint
+        }
+
+        function updateUI() {
+            if (currentApp) {
+                document.getElementById('modifierSection').classList.remove('hidden');
+                document.getElementById('deploySection').classList.remove('hidden');
+                document.getElementById('statusIndicator').classList.remove('hidden');
+                document.getElementById('appInfo').classList.remove('hidden');
+                document.getElementById('previewTitle').textContent = `📱 ${currentApp.name}`;
+                document.getElementById('fileCount').textContent = Object.keys(currentApp.files).length;
+                document.getElementById('depCount').textContent = currentApp.dependencies.length;
+                
+                // Update preview (in real app, this would load the actual app)
+                document.getElementById('previewContainer').innerHTML = `
+                    <div class="border-2 border-gray-300 rounded-lg overflow-hidden">
+                        <div class="h-96 bg-gradient-to-br from-blue-50 to-purple-100 flex items-center justify-center">
+                            <div class="text-center">
+                                <div class="text-6xl mb-4">🎉</div>
+                                <h3 class="text-2xl font-bold text-gray-900 mb-2">App Generated Successfully!</h3>
+                                <p class="text-gray-600">Your "${currentApp.description}" app is ready</p>
+                                <p class="text-sm text-gray-500 mt-2">In the real app, this would show the actual running application</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (apps.length > 0) {
+                document.getElementById('appGallery').classList.remove('hidden');
+                const appGrid = document.getElementById('appGrid');
+                appGrid.innerHTML = apps.map(app => `
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="font-semibold mb-2">${app.name}</h3>
+                        <p class="text-gray-600 text-sm mb-4">${app.description}</p>
+                        <div class="flex items-center justify-between">
+                            <span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
+                                ${app.status}
+                            </span>
+                            <button onclick="setCurrentApp('${app.id}')" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors">
+                                Open
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function setCurrentApp(appId) {
+            currentApp = apps.find(app => app.id === appId);
+            updateUI();
+        }
+
+        // Event listeners
+        document.getElementById('buildButton').addEventListener('click', generateCompleteApp);
+        document.getElementById('modifyInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                modifyApp(e.target.value);
+                e.target.value = '';
+            }
+        });
+    </script>
+</body>
+</html> 

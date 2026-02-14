@@ -1,0 +1,119 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "Next.js 14",
+    "React 18",
+    "Tailwind CSS",
+    "Node.js",
+    "Monaco Editor",
+    "Lucide React",
+    "React Hot Toast",
+    "Framer Motion",
+    "Socket.io",
+    "Puppeteer",
+    "Cheerio",
+    "Axios"
+  ],
+  "features": [
+    {
+      "name": "MechaStream Chat Interface",
+      "description": "Main AI chatbot interface with real-time messaging, code generation, and file attachments",
+      "files": ["src/components/MechaStreamChat.tsx"]
+    },
+    {
+      "name": "Code IDE",
+      "description": "Integrated development environment with code editor, terminal, and AI assistant",
+      "files": ["src/app/ide/page.tsx", "src/components/CodeEditor.tsx"]
+    },
+    {
+      "name": "WebContainer Terminal",
+      "description": "Real-time terminal simulation for code execution with mock Python, Node.js, and HTML support",
+      "files": ["src/components/WebContainerTerminal.tsx"]
+    },
+    {
+      "name": "AI API Integration",
+      "description": "Multi-provider AI API with fallback support for Groq, OpenAI, Google, and Ollama",
+      "files": ["src/app/api/ai/route.ts"]
+    },
+    {
+      "name": "Navigation System",
+      "description": "Main navigation component with routing and menu management",
+      "files": ["src/components/Navigation.tsx"]
+    },
+    {
+      "name": "Homepage",
+      "description": "Main landing page with hero section, feature grid, and integrated chatbot",
+      "files": ["src/app/page.tsx"]
+    },
+    {
+      "name": "ChatGPT Style Interface",
+      "description": "Alternative chat interface with ChatGPT-like styling",
+      "files": ["src/components/ChatGPTStyleInterface.tsx"]
+    },
+    {
+      "name": "Vibe Chat Interface",
+      "description": "Enhanced chat interface with advanced features and animations",
+      "files": ["src/components/VibeChatInterface.tsx"]
+    },
+    {
+      "name": "Live Preview Builder",
+      "description": "Real-time preview system for generated code and applications",
+      "files": ["src/components/LivePreviewBuilder.tsx"]
+    },
+    {
+      "name": "Deployment Manager",
+      "description": "Application deployment and hosting management system",
+      "files": ["src/components/DeploymentManager.tsx"]
+    },
+    {
+      "name": "Advanced Features Dashboard",
+      "description": "Dashboard for managing advanced AI features and settings",
+      "files": ["src/components/AdvancedFeaturesDashboard.tsx"]
+    },
+    {
+      "name": "Analytics Dashboard",
+      "description": "Analytics and monitoring dashboard for application usage",
+      "files": ["src/components/AnalyticsDashboard.tsx"]
+    },
+    {
+      "name": "AI Settings",
+      "description": "Configuration panel for AI providers and API settings",
+      "files": ["src/components/AISettings.tsx"]
+    },
+    {
+      "name": "Error Display",
+      "description": "Error handling and display system for user feedback",
+      "files": ["src/components/ErrorDisplay.tsx"]
+    },
+    {
+      "name": "API Status Indicator",
+      "description": "Real-time status monitoring for AI API providers",
+      "files": ["src/components/APIStatusIndicator.tsx"]
+    },
+    {
+      "name": "API Settings Dashboard",
+      "description": "Comprehensive API configuration and management interface",
+      "files": ["src/components/APISettingsDashboard.tsx"]
+    },
+    {
+      "name": "Web Search Integration",
+      "description": "Web search functionality for real-time information retrieval",
+      "files": ["src/components/WebSearch.tsx"]
+    },
+    {
+      "name": "Theme Customizer",
+      "description": "UI theme customization and styling system",
+      "files": ["src/components/ThemeCustomizer.tsx"]
+    },
+    {
+      "name": "Code Templates",
+      "description": "Pre-built code templates and snippets library",
+      "files": ["src/components/CodeTemplates.tsx"]
+    },
+    {
+      "name": "Live Dashboard",
+      "description": "Real-time dashboard for monitoring application performance",
+      "files": ["src/components/LiveDashboard.tsx"]
+    }
+  ]
+} 

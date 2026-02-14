@@ -1,0 +1,16 @@
+{
+  "name": "code-dyno-terminal-server",
+  "version": "1.0.0",
+  "description": "WebSocket server for Docker-isolated terminal sessions in Code IDE",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-pty": "^1.0.0",
+    "uuid": "^9.0.0",
+    "ws": "^8.14.2"
+  }
+}

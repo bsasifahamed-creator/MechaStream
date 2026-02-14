@@ -1,0 +1,209 @@
+{
+  "meta": {
+    "project": "MechaStream AI Platform",
+    "date": "2025-07-30",
+    "prepared_by": "Software Development Manager"
+  },
+  "product_overview": "MechaStream AI Platform is an integrated development and AI chatbot platform that combines real-time AI chat interfaces, an AI-assisted code IDE, and deployment management for developers and AI enthusiasts. It supports multi-provider AI APIs and real-time code execution and preview capabilities, designed for seamless coding, debugging, and AI interaction.",
+  "core_goals": [
+    "Provide a seamless AI chatbot experience with real-time messaging and code generation capabilities.",
+    "Deliver an integrated development environment with live code editing, terminal simulation, and AI assistance.",
+    "Support multiple AI API providers with fallback mechanisms to ensure high availability.",
+    "Enable real-time preview and deployment of applications generated or managed within the platform.",
+    "Offer robust navigation and UI customization to enhance user experience.",
+    "Provide detailed analytics, error handling, and monitoring dashboards for operational visibility."
+  ],
+  "key_features": [
+    "MechaStream Chat Interface facilitating real-time AI conversational interactions including code generation and file attachments.",
+    "Fully integrated Code IDE with a Monaco Editor based code editor, terminal simulation supporting multiple languages, and AI assistant integration.",
+    "Robust AI API integration with fallback support from providers including Groq, OpenAI, Google, and Ollama.",
+    "Multiple chat interfaces including ChatGPT style and enhanced Vibe Chat with animations for user choice.",
+    "Real-time Live Preview Builder to instantly view generated application code output.",
+    "Deployment Manager module for handling app deployment and hosting directly from the platform.",
+    "Advanced Features and Analytics Dashboards for managing AI capabilities and reviewing application performance metrics.",
+    "Comprehensive AI Settings and API Settings dashboards for configuration of AI provider credentials and preferences.",
+    "Real-time API Status Indicator providing ongoing monitoring of AI service availability.",
+    "Web Search feature integrated to retrieve real-time web information within chats.",
+    "Theme Customizer for UI styling and personalization.",
+    "A library of pre-built Code Templates and snippets to speed up development."
+  ],
+  "user_flow_summary": [
+    "Users land on the Homepage featuring an overview and integrated chatbot for quick interaction.",
+    "Users navigate via the Navigation System to access the IDE, Deployment Manager, Dashboards, and Settings.",
+    "Within the IDE, users write code in the Monaco Editor, execute it via the WebContainer Terminal, and interact with the AI Assistant for help and code generation.",
+    "Users can switch between different chat interfaces (MechaStream Chat, ChatGPT Style, and Vibe Chat) based on preference.",
+    "Users preview their work with the Live Preview Builder, deploy applications via the Deployment Manager, and monitor usage metrics with Analytics Dashboard.",
+    "Users manage AI provider configurations and monitor API statuses through dedicated settings and status components.",
+    "The platform provides error handling and real-time feedback through the Error Display and Toast notifications throughout workflows."
+  ],
+  "validation_criteria": [
+    "Real-time chat interfaces must deliver messages with minimal latency and support file attachments reliably.",
+    "Code IDE must provide syntax highlighting, error detection, and terminal outputs accurately for supported languages.",
+    "Fallback between AI API providers works seamlessly without user disruption during outages.",
+    "Live Preview updates reflect code changes instantly and deployment actions are logged and successful.",
+    "Navigation and UI customization settings persist across sessions and devices.",
+    "Dashboards must display accurate and up-to-date analytics and error data.",
+    "All API configuration changes must validate inputs and apply correctly to the AI service calls.",
+    "System must handle error conditions gracefully with clear user feedback across all features."
+  ],
+  "code_summary": {
+    "tech_stack": [
+      "TypeScript",
+      "Next.js 14",
+      "React 18",
+      "Tailwind CSS",
+      "Node.js",
+      "Monaco Editor",
+      "Lucide React",
+      "React Hot Toast",
+      "Framer Motion",
+      "Socket.io",
+      "Puppeteer",
+      "Cheerio",
+      "Axios"
+    ],
+    "features": [
+      {
+        "name": "MechaStream Chat Interface",
+        "description": "Main AI chatbot interface with real-time messaging, code generation, and file attachments",
+        "files": [
+          "src/components/MechaStreamChat.tsx"
+        ]
+      },
+      {
+        "name": "Code IDE",
+        "description": "Integrated development environment with code editor, terminal, and AI assistant",
+        "files": [
+          "src/app/ide/page.tsx",
+          "src/components/CodeEditor.tsx"
+        ]
+      },
+      {
+        "name": "WebContainer Terminal",
+        "description": "Real-time terminal simulation for code execution with mock Python, Node.js, and HTML support",
+        "files": [
+          "src/components/WebContainerTerminal.tsx"
+        ]
+      },
+      {
+        "name": "AI API Integration",
+        "description": "Multi-provider AI API with fallback support for Groq, OpenAI, Google, and Ollama",
+        "files": [
+          "src/app/api/ai/route.ts"
+        ]
+      },
+      {
+        "name": "Navigation System",
+        "description": "Main navigation component with routing and menu management",
+        "files": [
+          "src/components/Navigation.tsx"
+        ]
+      },
+      {
+        "name": "Homepage",
+        "description": "Main landing page with hero section, feature grid, and integrated chatbot",
+        "files": [
+          "src/app/page.tsx"
+        ]
+      },
+      {
+        "name": "ChatGPT Style Interface",
+        "description": "Alternative chat interface with ChatGPT-like styling",
+        "files": [
+          "src/components/ChatGPTStyleInterface.tsx"
+        ]
+      },
+      {
+        "name": "Vibe Chat Interface",
+        "description": "Enhanced chat interface with advanced features and animations",
+        "files": [
+          "src/components/VibeChatInterface.tsx"
+        ]
+      },
+      {
+        "name": "Live Preview Builder",
+        "description": "Real-time preview system for generated code and applications",
+        "files": [
+          "src/components/LivePreviewBuilder.tsx"
+        ]
+      },
+      {
+        "name": "Deployment Manager",
+        "description": "Application deployment and hosting management system",
+        "files": [
+          "src/components/DeploymentManager.tsx"
+        ]
+      },
+      {
+        "name": "Advanced Features Dashboard",
+        "description": "Dashboard for managing advanced AI features and settings",
+        "files": [
+          "src/components/AdvancedFeaturesDashboard.tsx"
+        ]
+      },
+      {
+        "name": "Analytics Dashboard",
+        "description": "Analytics and monitoring dashboard for application usage",
+        "files": [
+          "src/components/AnalyticsDashboard.tsx"
+        ]
+      },
+      {
+        "name": "AI Settings",
+        "description": "Configuration panel for AI providers and API settings",
+        "files": [
+          "src/components/AISettings.tsx"
+        ]
+      },
+      {
+        "name": "Error Display",
+        "description": "Error handling and display system for user feedback",
+        "files": [
+          "src/components/ErrorDisplay.tsx"
+        ]
+      },
+      {
+        "name": "API Status Indicator",
+        "description": "Real-time status monitoring for AI API providers",
+        "files": [
+          "src/components/APIStatusIndicator.tsx"
+        ]
+      },
+      {
+        "name": "API Settings Dashboard",
+        "description": "Comprehensive API configuration and management interface",
+        "files": [
+          "src/components/APISettingsDashboard.tsx"
+        ]
+      },
+      {
+        "name": "Web Search Integration",
+        "description": "Web search functionality for real-time information retrieval",
+        "files": [
+          "src/components/WebSearch.tsx"
+        ]
+      },
+      {
+        "name": "Theme Customizer",
+        "description": "UI theme customization and styling system",
+        "files": [
+          "src/components/ThemeCustomizer.tsx"
+        ]
+      },
+      {
+        "name": "Code Templates",
+        "description": "Pre-built code templates and snippets library",
+        "files": [
+          "src/components/CodeTemplates.tsx"
+        ]
+      },
+      {
+        "name": "Live Dashboard",
+        "description": "Real-time dashboard for monitoring application performance",
+        "files": [
+          "src/components/LiveDashboard.tsx"
+        ]
+      }
+    ]
+  }
+}

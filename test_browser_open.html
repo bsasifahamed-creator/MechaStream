@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Open Test</title>
+</head>
+<body>
+    <h1>Testing Browser Opening</h1>
+    <p>This will test if the browser opening functionality works.</p>
+    
+    <button onclick="testOpenFlask()">Test Open Flask</button>
+    <button onclick="testOpenLocalhost()">Test Open Localhost</button>
+    
+    <script>
+        function testOpenFlask() {
+            console.log('🌐 Testing Flask server opening...');
+            const flaskUrl = 'http://localhost:5000';
+            window.open(flaskUrl, '_blank');
+        }
+        
+        function testOpenLocalhost() {
+            console.log('🌐 Testing localhost opening...');
+            const localhostUrl = 'http://127.0.0.1:5000';
+            window.open(localhostUrl, '_blank');
+        }
+        
+        // Auto-test after 3 seconds
+        setTimeout(() => {
+            console.log('🌐 Auto-testing browser opening...');
+            testOpenFlask();
+        }, 3000);
+    </script>
+</body>
+</html> 

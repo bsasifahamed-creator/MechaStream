@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Open Test</title>
+</head>
+<body>
+    <h1>Testing Auto-Open Functionality</h1>
+    <p>This page will automatically open a Flask server URL after 2 seconds.</p>
+    
+    <script>
+        // Simulate Flask server URL detection
+        setTimeout(() => {
+            const flaskUrl = 'http://localhost:5000';
+            console.log('🌐 Auto-opening Flask server:', flaskUrl);
+            window.open(flaskUrl, '_blank');
+        }, 2000);
+    </script>
+</body>
+</html> 

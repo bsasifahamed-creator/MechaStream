@@ -1,0 +1,16 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3002",
+  "executionArgs": {
+    "projectName": "ai-no-code-builder",
+    "projectPath": "C:\\Users\\Asif\\OneDrive\\Desktop\\code dyno",
+    "testIds": [],
+    "additionalInstruction": "Focus on testing the MechaStreamChat component specifically for issues with prompt handling, message display, and API response processing. Test the chatbot's ability to send prompts, receive responses, and display them correctly.",
+    "envs": {
+      "API_KEY": "sk-user-fPjl52yJcBoBVveDlTith1Qe-f97pbnqBKxBt-Gczx82U31gFILhvwtcWiZvCf2G8x9l5ue5Rt4ivol24Kc-pBtp2CSb_ar1aen5IHSQ58SA-AzSHSYaJ-bcW3fl0hcKKUw"
+    }
+  },
+  "proxy": "http://3dc1df43-fb8d-4257-98a0-3d56fc6d9fe8:c2ii7MEuz98rYfgtPJfPpTvTEvRw3G0N@tun.testsprite.com:8080"
+}
