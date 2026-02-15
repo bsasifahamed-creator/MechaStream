@@ -58,7 +58,21 @@ async function tryRefreshSession(request: NextRequest) {
   })
 
   if (!refreshResponse.ok) return null
-  return refreshResponse
+
+  let refreshedAccessToken: string | null = null
+  try {
+    const payload = (await refreshResponse.clone().json()) as { accessToken?: string }
+    if (typeof payload?.accessToken === 'string') {
+      refreshedAccessToken = payload.accessToken
+    }
+  } catch {
+    refreshedAccessToken = null
+  }
+
+  return {
+    refreshResponse,
+    refreshedAccessToken,
+  }
 }
 
 function isPrefixMatch(pathname: string, prefixes: string[]) {
@@ -87,11 +101,25 @@ export async function middleware(request: NextRequest) {
 
     const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value ?? null
     if (refreshToken) {
-      const refreshResponse = await tryRefreshSession(request)
-      if (refreshResponse) {
-        const next = NextResponse.next()
-        copySetCookieHeaders(refreshResponse, next)
-        return next
+      const refreshResult = await tryRefreshSession(request)
+      if (refreshResult) {
+        if (isProtectedPage) {
+          const redirectToSelf = NextResponse.redirect(request.nextUrl)
+          copySetCookieHeaders(refreshResult.refreshResponse, redirectToSelf)
+          return redirectToSelf
+        }
+
+        if (isProtectedApi && refreshResult.refreshedAccessToken) {
+          const requestHeaders = new Headers(request.headers)
+          requestHeaders.set('authorization', `Bearer ${refreshResult.refreshedAccessToken}`)
+          const next = NextResponse.next({
+            request: {
+              headers: requestHeaders,
+            },
+          })
+          copySetCookieHeaders(refreshResult.refreshResponse, next)
+          return next
+        }
       }
     }
 
@@ -111,10 +139,10 @@ export async function middleware(request: NextRequest) {
   if (isAuthPage && !hasValidAccessToken) {
     const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value ?? null
     if (refreshToken) {
-      const refreshResponse = await tryRefreshSession(request)
-      if (refreshResponse) {
+      const refreshResult = await tryRefreshSession(request)
+      if (refreshResult) {
         const redirectResponse = NextResponse.redirect(new URL('/dashboard', request.url))
-        copySetCookieHeaders(refreshResponse, redirectResponse)
+        copySetCookieHeaders(refreshResult.refreshResponse, redirectResponse)
         return redirectResponse
       }
     }
