@@ -3,7 +3,17 @@
 import { usePathname } from 'next/navigation';
 import Navigation from '@/components/Navigation';
 
-const HIDE_NAV_PATHS = ['/', '/ide', '/export'];
+const HIDE_NAV_PATHS = [
+  '/',
+  '/ide',
+  '/export',
+  '/login',
+  '/signup',
+  '/forgot-password',
+  '/reset-password',
+  '/dashboard',
+  '/profile',
+]
 
 export default function ConditionalNavLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
