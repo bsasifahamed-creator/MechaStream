@@ -78,7 +78,8 @@ export async function sendPasswordResetEmail({
     `,
   })
 
-  const previewUrl = nodemailer.getTestMessageUrl(result) ?? null
+  const rawPreviewUrl = nodemailer.getTestMessageUrl(result)
+  const previewUrl = typeof rawPreviewUrl === 'string' ? rawPreviewUrl : null
 
   return {
     messageId: result.messageId,

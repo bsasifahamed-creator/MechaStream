@@ -12,7 +12,7 @@ export type AuthUser = {
   lastLoginAt: string | null
 }
 
-type AuthResponse<T = Record<string, unknown>> = {
+type AuthResponse<T = unknown> = {
   ok: boolean
   data?: T
   error?: string
