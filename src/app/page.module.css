@@ -1,0 +1,793 @@
+.page {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  color: #f8fafc;
+  background:
+    radial-gradient(circle at 16% 18%, rgba(190, 24, 93, 0.33), transparent 33%),
+    radial-gradient(circle at 87% 12%, rgba(14, 116, 144, 0.3), transparent 30%),
+    radial-gradient(circle at 50% 86%, rgba(147, 51, 234, 0.26), transparent 40%),
+    linear-gradient(155deg, #05030e 0%, #100726 46%, #1a0f3a 100%);
+}
+
+.page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 54px 54px;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.partyOn::after {
+  content: '';
+  position: absolute;
+  inset: -30%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.16), transparent 58%);
+  animation: partyPulse 3.5s ease-in-out infinite;
+}
+
+.aurora {
+  position: absolute;
+  inset: -35%;
+  pointer-events: none;
+  background: conic-gradient(
+    from 130deg at 50% 50%,
+    rgba(236, 72, 153, 0.22),
+    rgba(56, 189, 248, 0.2),
+    rgba(34, 197, 94, 0.16),
+    rgba(168, 85, 247, 0.2),
+    rgba(236, 72, 153, 0.22)
+  );
+  filter: blur(80px);
+  opacity: 0.9;
+  animation: driftAurora 20s linear infinite;
+}
+
+.mesh {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 65%, rgba(255, 255, 255, 0.07), transparent 24%),
+    radial-gradient(circle at 82% 42%, rgba(255, 255, 255, 0.05), transparent 21%);
+  opacity: 0.55;
+}
+
+.sparkleLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.sparkle {
+  position: absolute;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.8);
+  animation: twinkle ease-in-out infinite;
+}
+
+.confettiLayer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 7;
+}
+
+.confettiPiece {
+  position: absolute;
+  top: -12vh;
+  width: 10px;
+  height: 20px;
+  animation: confettiDrop var(--fall-duration) linear infinite;
+  animation-delay: var(--delay);
+}
+
+.confettiPiece::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  background: var(--piece-color);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--piece-color) 70%, #ffffff 30%);
+  animation: confettiSpin var(--spin-duration) linear infinite;
+  animation-delay: var(--delay);
+}
+
+.main {
+  position: relative;
+  z-index: 4;
+  width: min(1100px, 92vw);
+  margin: 0 auto;
+  padding: clamp(3rem, 7vw, 5.4rem) 0 2.8rem;
+  display: grid;
+  gap: 1.9rem;
+}
+
+.hero {
+  text-align: center;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.badge {
+  display: inline-block;
+  margin: 0;
+  padding: 0.42rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(236, 72, 153, 0.45);
+  background: rgba(9, 6, 34, 0.58);
+  color: #fda4af;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.title {
+  margin: 1rem 0 0;
+  font-size: clamp(2.2rem, 6vw, 4.5rem);
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+  font-weight: 800;
+  text-wrap: balance;
+}
+
+.name {
+  display: block;
+  margin-top: 0.22rem;
+  background: linear-gradient(90deg, #f9a8d4 0%, #93c5fd 48%, #67e8f9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 6px 24px rgba(147, 197, 253, 0.28);
+}
+
+.subtitle {
+  margin: 1rem auto 0;
+  max-width: 760px;
+  color: rgba(226, 232, 240, 0.9);
+  font-size: clamp(1rem, 1.8vw, 1.17rem);
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+.buttonRow {
+  margin-top: 1.55rem;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
+.primaryButton,
+.secondaryButton {
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 0.78rem 1.5rem;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+.primaryButton {
+  color: #faf5ff;
+  background: linear-gradient(120deg, #be185d 0%, #9333ea 55%, #2563eb 100%);
+  box-shadow: 0 10px 30px rgba(91, 33, 182, 0.45);
+}
+
+.secondaryButton {
+  color: #e2e8f0;
+  border-color: rgba(148, 163, 184, 0.45);
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.primaryButton:hover,
+.secondaryButton:hover {
+  transform: translateY(-2px);
+}
+
+.primaryButton:hover {
+  box-shadow: 0 15px 35px rgba(147, 51, 234, 0.52);
+}
+
+.secondaryButton:hover {
+  border-color: rgba(236, 72, 153, 0.62);
+}
+
+.wishCard {
+  margin: 1.2rem auto 0;
+  width: min(760px, 100%);
+  padding: 1rem 1.2rem 1.15rem;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.72), rgba(30, 27, 75, 0.58));
+  box-shadow: 0 20px 45px rgba(7, 8, 27, 0.44);
+  backdrop-filter: blur(8px);
+}
+
+.wishLabel {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.71rem;
+  color: #cbd5e1;
+}
+
+.wishText {
+  margin: 0.6rem 0 0;
+  font-size: clamp(1rem, 2.1vw, 1.14rem);
+  line-height: 1.55;
+  color: #f8fafc;
+}
+
+.equalizer {
+  margin-top: 0.95rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 0.36rem;
+  min-height: 2.1rem;
+}
+
+.equalizerBar {
+  width: 0.34rem;
+  height: 0.66rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #67e8f9 0%, #a78bfa 100%);
+  opacity: 0.75;
+}
+
+.equalizerActive .equalizerBar {
+  animation: equalizerDance 0.96s ease-in-out infinite;
+}
+
+.sceneSection {
+  margin-top: 0.2rem;
+}
+
+.sceneViewport {
+  position: relative;
+  min-height: 530px;
+  perspective: 1400px;
+  cursor: grab;
+}
+
+.sceneViewport:active {
+  cursor: grabbing;
+}
+
+.scene {
+  position: relative;
+  width: min(920px, 100%);
+  height: 530px;
+  margin: 0 auto;
+  transform-style: preserve-3d;
+  transition: transform 220ms ease-out;
+}
+
+.floorGlow {
+  position: absolute;
+  left: 50%;
+  bottom: 78px;
+  width: 540px;
+  height: 170px;
+  transform: translateX(-50%) rotateX(88deg);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(244, 114, 182, 0.42) 0%,
+    rgba(99, 102, 241, 0.26) 42%,
+    rgba(0, 0, 0, 0) 76%
+  );
+  filter: blur(8px);
+}
+
+.lightBeamLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.lightBeam {
+  position: absolute;
+  top: -14px;
+  width: 98px;
+  height: 320px;
+  transform: translateZ(-80px) skewX(-9deg);
+  transform-origin: top;
+  border-radius: 999px 999px 12px 12px;
+  opacity: 0.37;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0) 76%);
+  filter: blur(1px);
+  animation: beamPulse 6.4s ease-in-out infinite;
+}
+
+.balloonLayer {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+.balloon {
+  position: absolute;
+  left: var(--balloon-x);
+  top: var(--balloon-y);
+  width: 88px;
+  height: 112px;
+  border-radius: 56% 56% 48% 48%;
+  transform: translate3d(-50%, -50%, var(--balloon-z));
+  background:
+    radial-gradient(circle at 28% 24%, rgba(255, 255, 255, 0.82) 0%, rgba(255, 255, 255, 0.16) 26%, transparent 42%),
+    linear-gradient(170deg, var(--balloon-color), rgba(0, 0, 0, 0.24));
+  box-shadow:
+    inset -10px -16px 22px rgba(0, 0, 0, 0.24),
+    0 12px 22px rgba(10, 10, 25, 0.32);
+  animation: floatBalloon var(--balloon-duration) ease-in-out infinite;
+  animation-delay: var(--balloon-delay);
+}
+
+.balloonShine {
+  position: absolute;
+  right: 14px;
+  top: 25px;
+  width: 16px;
+  height: 34px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.34);
+  transform: rotate(16deg);
+}
+
+.balloonKnot {
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 16px;
+  height: 12px;
+  background: var(--balloon-color);
+  border-radius: 0 0 70% 70%;
+  transform: translateX(-50%);
+}
+
+.balloonString {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 4px);
+  width: 2px;
+  height: 110px;
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.85), rgba(248, 250, 252, 0.15));
+  transform: translateX(-50%);
+}
+
+.cake {
+  position: absolute;
+  left: 50%;
+  bottom: 130px;
+  width: 300px;
+  height: 250px;
+  transform: translateX(-50%) translateZ(80px);
+  transform-style: preserve-3d;
+  animation: cakeHover 6.2s ease-in-out infinite;
+}
+
+.cakeLayer {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 26px;
+  background: linear-gradient(180deg, var(--cake-a), var(--cake-b));
+  box-shadow:
+    inset 0 8px 12px rgba(255, 255, 255, 0.24),
+    inset 0 -11px 20px rgba(0, 0, 0, 0.3),
+    0 14px 24px rgba(5, 5, 15, 0.35);
+}
+
+.cakeLayer::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -14px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.14) 56%, rgba(255, 255, 255, 0));
+}
+
+.cakeLayer::after {
+  content: '';
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -10px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.32);
+  filter: blur(8px);
+  z-index: -1;
+}
+
+.frosting {
+  position: absolute;
+  left: 50%;
+  bottom: 166px;
+  width: 188px;
+  height: 30px;
+  border-radius: 999px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #fce7f3 0%, #f5d0fe 100%);
+  box-shadow: inset 0 6px 8px rgba(255, 255, 255, 0.6);
+}
+
+.frostDrop {
+  position: absolute;
+  bottom: -14px;
+  width: 14px;
+  height: 24px;
+  border-radius: 0 0 10px 10px;
+  background: linear-gradient(180deg, #fbcfe8 0%, #f5d0fe 100%);
+  animation: dripSwing 3.4s ease-in-out infinite;
+}
+
+.candleRow {
+  position: absolute;
+  left: 50%;
+  bottom: 196px;
+  width: 210px;
+  height: 88px;
+  transform: translateX(-50%);
+}
+
+.candle {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 16px;
+  height: 62px;
+  border-radius: 8px;
+  transform: translateX(calc(-50% + var(--x)));
+  background: repeating-linear-gradient(
+    45deg,
+    #fff7ed,
+    #fff7ed 6px,
+    #f472b6 6px,
+    #f472b6 12px
+  );
+  box-shadow: inset 0 -4px 8px rgba(0, 0, 0, 0.24);
+}
+
+.flame {
+  position: absolute;
+  left: 50%;
+  top: -24px;
+  width: 18px;
+  height: 30px;
+  transform: translateX(-50%);
+  border-radius: 52% 52% 40% 40%;
+  background: radial-gradient(
+    circle at 50% 28%,
+    #fff9db 0%,
+    #fde68a 25%,
+    #f59e0b 56%,
+    #fb7185 100%
+  );
+  filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.9));
+  animation: flameFlicker 1s ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+
+.cakePlate {
+  position: absolute;
+  left: 50%;
+  bottom: -22px;
+  width: 310px;
+  height: 34px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 100%);
+  box-shadow:
+    inset 0 6px 8px rgba(255, 255, 255, 0.55),
+    0 12px 20px rgba(15, 23, 42, 0.34);
+}
+
+.giftLayer {
+  position: absolute;
+  left: 50%;
+  bottom: 80px;
+  width: min(760px, 96%);
+  height: 160px;
+  transform: translateX(-50%) translateZ(38px);
+}
+
+.gift {
+  position: absolute;
+  bottom: 0;
+  width: 114px;
+  height: 86px;
+  border-radius: 14px;
+  transform: translateX(-50%) rotateY(var(--gift-rotate));
+  transform-style: preserve-3d;
+  background: linear-gradient(155deg, var(--gift-a), var(--gift-b));
+  box-shadow: 0 14px 24px rgba(3, 8, 24, 0.42);
+  animation: giftBob 4.6s ease-in-out infinite;
+}
+
+.giftLid {
+  position: absolute;
+  left: -6%;
+  top: -22px;
+  width: 112%;
+  height: 24px;
+  border-radius: 11px;
+  background: linear-gradient(155deg, var(--gift-a), var(--gift-b));
+  box-shadow: 0 6px 10px rgba(15, 23, 42, 0.38);
+}
+
+.giftRibbonVertical {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 16px;
+  height: 100%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, var(--gift-ribbon), #fffbeb);
+}
+
+.giftRibbonHorizontal {
+  position: absolute;
+  left: 0;
+  top: 36%;
+  width: 100%;
+  height: 13px;
+  background: linear-gradient(90deg, var(--gift-ribbon), #fffbeb);
+}
+
+.starRing {
+  position: absolute;
+  left: 50%;
+  top: 43%;
+  width: 1px;
+  height: 1px;
+  transform: translateX(-50%) translateZ(-10px);
+  transform-style: preserve-3d;
+  animation: starSpin 20s linear infinite;
+}
+
+.star {
+  position: absolute;
+  left: -2px;
+  top: -2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #fef08a;
+  box-shadow: 0 0 12px rgba(254, 240, 138, 0.9);
+}
+
+.footerText {
+  margin: 0.3rem 0 0;
+  text-align: center;
+  color: rgba(203, 213, 225, 0.9);
+  font-size: 0.92rem;
+  letter-spacing: 0.015em;
+}
+
+@keyframes driftAurora {
+  0% {
+    transform: translate3d(-5%, -3%, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(4%, 3%, 0) rotate(7deg);
+  }
+  100% {
+    transform: translate3d(-5%, -3%, 0) rotate(0deg);
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.95;
+  }
+}
+
+@keyframes partyPulse {
+  0%,
+  100% {
+    opacity: 0.1;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes confettiDrop {
+  0% {
+    transform: translate3d(0, -12vh, 0);
+  }
+  100% {
+    transform: translate3d(var(--drift), 110vh, 0);
+  }
+}
+
+@keyframes confettiSpin {
+  0% {
+    transform: rotate(0deg) rotateY(0deg);
+  }
+  100% {
+    transform: rotate(var(--rotation)) rotateY(540deg);
+  }
+}
+
+@keyframes equalizerDance {
+  0%,
+  100% {
+    height: 0.62rem;
+    opacity: 0.72;
+  }
+  50% {
+    height: 1.95rem;
+    opacity: 1;
+  }
+}
+
+@keyframes beamPulse {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform: translateZ(-80px) skewX(-9deg) scaleY(0.88);
+  }
+  45% {
+    opacity: 0.45;
+    transform: translateZ(-80px) skewX(-9deg) scaleY(1.03);
+  }
+}
+
+@keyframes floatBalloon {
+  0%,
+  100% {
+    transform: translate3d(-50%, -50%, var(--balloon-z));
+  }
+  50% {
+    transform: translate3d(calc(-50% + 8px), calc(-58% - 8px), calc(var(--balloon-z) + 24px));
+  }
+}
+
+@keyframes cakeHover {
+  0%,
+  100% {
+    transform: translateX(-50%) translateZ(80px);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-10px) translateZ(96px);
+  }
+}
+
+@keyframes dripSwing {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+@keyframes flameFlicker {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 0.96;
+  }
+  30% {
+    transform: translateX(calc(-50% - 1px)) scale(1.08, 0.98);
+  }
+  65% {
+    transform: translateX(calc(-50% + 1px)) scale(0.95, 1.06);
+    opacity: 0.82;
+  }
+}
+
+@keyframes giftBob {
+  0%,
+  100% {
+    transform: translateX(-50%) rotateY(var(--gift-rotate));
+  }
+  50% {
+    transform: translateX(-50%) translateY(-8px) rotateY(var(--gift-rotate));
+  }
+}
+
+@keyframes starSpin {
+  from {
+    transform: translateX(-50%) translateZ(-10px) rotate(0deg);
+  }
+  to {
+    transform: translateX(-50%) translateZ(-10px) rotate(360deg);
+  }
+}
+
+@media (max-width: 980px) {
+  .main {
+    width: min(1100px, 94vw);
+  }
+
+  .sceneViewport {
+    min-height: 500px;
+  }
+
+  .scene {
+    height: 500px;
+  }
+
+  .cake {
+    transform: translateX(-50%) translateZ(66px) scale(0.94);
+  }
+}
+
+@media (max-width: 700px) {
+  .buttonRow {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    width: min(310px, 92vw);
+  }
+
+  .sceneViewport {
+    min-height: 420px;
+  }
+
+  .scene {
+    height: 420px;
+  }
+
+  .balloon {
+    width: 68px;
+    height: 88px;
+  }
+
+  .balloonString {
+    height: 78px;
+  }
+
+  .cake {
+    bottom: 96px;
+    transform: translateX(-50%) translateZ(40px) scale(0.76);
+  }
+
+  .giftLayer {
+    bottom: 56px;
+  }
+
+  .gift {
+    width: 92px;
+    height: 70px;
+  }
+
+  .giftLid {
+    top: -18px;
+    height: 20px;
+  }
+
+  .starRing {
+    top: 38%;
+  }
+}

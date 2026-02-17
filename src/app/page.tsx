@@ -1,234 +1,311 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
+import styles from './page.module.css';
+
+type CSSVars = React.CSSProperties & Record<`--${string}`, string>;
+
+const wishes = [
+  'May your year sparkle with success, joy, and unforgettable adventures.',
+  'Wishing you endless laughter, beautiful memories, and all the happiness you deserve.',
+  'May every dream you hold today become a bright reality tomorrow.',
+  'Happy Birthday Zeeshan Farhath! Keep shining, inspiring, and celebrating life in style.',
+];
+
+const sparkleDots = Array.from({ length: 44 }, (_, index) => ({
+  id: `spark-${index}`,
+  left: `${(index * 37 + 11) % 100}%`,
+  top: `${(index * 19 + 7) % 100}%`,
+  size: 2 + (index % 3),
+  duration: 2.1 + (index % 5) * 0.7,
+  delay: (index % 7) * 0.35,
+  opacity: 0.38 + (index % 4) * 0.14,
+}));
+
+const lightBeams = [
+  { id: 'beam-1', left: '8%', hue: 10, delay: '0s' },
+  { id: 'beam-2', left: '24%', hue: 60, delay: '0.7s' },
+  { id: 'beam-3', left: '49%', hue: 145, delay: '1.1s' },
+  { id: 'beam-4', left: '71%', hue: 245, delay: '0.3s' },
+  { id: 'beam-5', left: '88%', hue: 320, delay: '1.5s' },
+];
+
+const balloons = [
+  { id: 'balloon-1', x: '8%', y: '20%', z: '160px', color: '#ff5f9e', delay: '0s', duration: '7.1s' },
+  { id: 'balloon-2', x: '21%', y: '13%', z: '120px', color: '#60a5fa', delay: '1.1s', duration: '6.5s' },
+  { id: 'balloon-3', x: '34%', y: '23%', z: '60px', color: '#fbbf24', delay: '0.5s', duration: '8s' },
+  { id: 'balloon-4', x: '63%', y: '11%', z: '90px', color: '#a78bfa', delay: '1.8s', duration: '7.3s' },
+  { id: 'balloon-5', x: '78%', y: '18%', z: '140px', color: '#34d399', delay: '0.8s', duration: '7.8s' },
+  { id: 'balloon-6', x: '92%', y: '24%', z: '40px', color: '#fb7185', delay: '1.4s', duration: '6.9s' },
+];
+
+const gifts = [
+  { id: 'gift-1', left: '14%', rotate: '-18deg', colorA: '#6d28d9', colorB: '#4c1d95', ribbon: '#fef08a', delay: '0.4s' },
+  { id: 'gift-2', left: '30%', rotate: '12deg', colorA: '#be185d', colorB: '#831843', ribbon: '#fde68a', delay: '1.1s' },
+  { id: 'gift-3', left: '70%', rotate: '-14deg', colorA: '#0f766e', colorB: '#134e4a', ribbon: '#fef3c7', delay: '0.6s' },
+  { id: 'gift-4', left: '86%', rotate: '15deg', colorA: '#1d4ed8', colorB: '#1e3a8a', ribbon: '#fff7ed', delay: '1.5s' },
+];
+
+const cakeLayers = [
+  { id: 'layer-bottom', width: 272, height: 92, bottom: 0, colorA: '#5b21b6', colorB: '#312e81' },
+  { id: 'layer-middle', width: 224, height: 78, bottom: 66, colorA: '#7c3aed', colorB: '#4c1d95' },
+  { id: 'layer-top', width: 176, height: 64, bottom: 124, colorA: '#a855f7', colorB: '#6d28d9' },
+];
+
+const confettiPalette = ['#f43f5e', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#6366f1', '#ec4899', '#f8fafc'];
+
+const pseudoRandom = (seed: number): number => {
+  const value = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
+  return value - Math.floor(value);
+};
 
 export default function HomePage() {
-  const [prompt, setPrompt] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [redirectLink, setRedirectLink] = useState<string | null>(null);
+  const [partyMode, setPartyMode] = useState(false);
+  const [wishIndex, setWishIndex] = useState(0);
+  const [burstSeed, setBurstSeed] = useState(1);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
-    const q = params.get('error');
-    if (q) setError(decodeURIComponent(q).replace(/\+/g, ' '));
-  }, []);
+  const confettiPieces = useMemo(() => {
+    if (!partyMode) return [];
 
-  const runBuild = async () => {
-    const trimmed = prompt.trim();
-    if (!trimmed) {
-      setError('Please enter a short description (e.g. "todo app") first.');
-      return;
-    }
-    if (isLoading) return;
+    return Array.from({ length: 120 }, (_, index) => {
+      const seed = burstSeed * 200 + index * 17;
 
-    setError(null);
-    setRedirectLink(null);
-    setIsLoading(true);
+      return {
+        id: `${burstSeed}-${index}`,
+        left: `${Math.round(pseudoRandom(seed) * 100)}%`,
+        delay: `${(pseudoRandom(seed + 1) * 0.5).toFixed(2)}s`,
+        fallDuration: `${(2.8 + pseudoRandom(seed + 2) * 2.1).toFixed(2)}s`,
+        spinDuration: `${(1 + pseudoRandom(seed + 3) * 1.8).toFixed(2)}s`,
+        drift: `${Math.round(pseudoRandom(seed + 4) * 240 - 120)}px`,
+        rotation: `${Math.round(pseudoRandom(seed + 5) * 720 - 360)}deg`,
+        color: confettiPalette[index % confettiPalette.length],
+      };
+    });
+  }, [burstSeed, partyMode]);
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 35000);
-
-    try {
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: trimmed }),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      let data: { projectId?: string; projectName?: string; error?: string } = {};
-      try {
-        data = await res.json();
-      } catch {
-        setError('Invalid response from server. Try again.');
-        setIsLoading(false);
-        return;
-      }
-
-      if (!res.ok) {
-        setError(data.error || `Server error (${res.status}). Try again.`);
-        setIsLoading(false);
-        return;
-      }
-
-      const projectId = data.projectId ?? data.projectName;
-      if (!projectId) {
-        setError('No project ID returned. Try again.');
-        setIsLoading(false);
-        return;
-      }
-
-      const ideUrl = `/ide?project=${encodeURIComponent(projectId)}&prompt=${encodeURIComponent(trimmed)}`;
-      window.location.replace(ideUrl);
-      setError(null);
-      setTimeout(() => {
-        if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/ide')) {
-          setRedirectLink(ideUrl);
-          setIsLoading(false);
-        }
-      }, 1500);
-    } catch (err) {
-      clearTimeout(timeoutId);
-      if (err instanceof Error) {
-        if (err.name === 'AbortError') {
-          setError('Request timed out. Start Ollama (ollama serve) or try a shorter prompt.');
-        } else {
-          setError(err.message);
-        }
-      } else {
-        setError('Something went wrong. Try again.');
-      }
-      setIsLoading(false);
-    }
+  const launchSurprise = () => {
+    setPartyMode(true);
+    setBurstSeed((value) => value + 1);
+    setWishIndex((value) => (value + 1) % wishes.length);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    const trimmed = prompt.trim();
-    if (!trimmed) {
-      e.preventDefault();
-      setError('Please enter a short description (e.g. "todo app") first.');
-      return;
-    }
-    e.preventDefault();
-    setError(null);
-    setRedirectLink(null);
-    // Force navigation so output is always generated (avoids form submit being blocked)
-    const url = `/api/generate?prompt=${encodeURIComponent(trimmed)}`;
-    window.location.href = url;
+  const showNextWish = () => {
+    setWishIndex((value) => (value + 1) % wishes.length);
+    if (!partyMode) setPartyMode(true);
   };
+
+  const handleSceneMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const relativeX = (event.clientX - bounds.left) / bounds.width - 0.5;
+    const relativeY = (event.clientY - bounds.top) / bounds.height - 0.5;
+
+    setTilt({
+      x: Number((-relativeY * 10).toFixed(2)),
+      y: Number((relativeX * 14).toFixed(2)),
+    });
+  };
+
+  const resetTilt = () => setTilt({ x: 0, y: 0 });
 
   return (
-    <div className="min-h-screen w-full bg-mono-black">
-      {/* Header Menu */}
-      <header className="bg-mono-sidebar-bg border-b border-mono-border-grey">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-mono-accent-blue">MechaStream</h1>
-            </div>
-            <nav className="flex space-x-8">
-              <a href="/" className="text-mono-white hover:text-mono-accent-blue transition-colors">Home</a>
-              <a href="/ide" className="text-mono-white hover:text-mono-accent-blue transition-colors">Code IDE</a>
-              <a href="/simulation" className="text-mono-white hover:text-mono-accent-blue transition-colors">Simulation</a>
-              <a href="/export" className="text-mono-white hover:text-mono-accent-blue transition-colors">Export</a>
-              <a href="/login" className="text-mono-white hover:text-mono-accent-blue transition-colors">Login</a>
-            </nav>
-          </div>
-        </div>
-      </header>
+    <div className={`${styles.page} ${partyMode ? styles.partyOn : ''}`}>
+      <div className={styles.aurora} />
+      <div className={styles.mesh} />
 
-      {/* Hero Section */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-mono-dark-bg"></div>
-        <div className="relative z-10 px-4 py-16 sm:px-6 sm:py-24 lg:px-8 lg:py-32">
-          <div className="mx-auto max-w-4xl text-center">
-            <h1 className="text-4xl font-bold tracking-tight text-mono-white sm:text-6xl lg:text-7xl">
-              Build anything with
-              <span className="block text-mono-accent-blue">
-                AI
-              </span>
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-mono-medium-grey sm:text-xl">
-              Describe what you want to build. Our AI creates the project, generates the code,
-              and opens it in the IDE—ready to edit and run.
-            </p>
-
-            {/* Form submits to GET /api/generate?prompt=... so Build works with or without JavaScript */}
-            <div className="mt-10">
-              <form
-                method="get"
-                action="/api/generate"
-                onSubmit={handleSubmit}
-                className="mx-auto max-w-md"
-                noValidate
-              >
-                <div className="flex gap-x-4">
-                  <label htmlFor="prompt" className="sr-only">
-                    Describe your project
-                  </label>
-                  <input
-                    id="prompt"
-                    name="prompt"
-                    type="text"
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="Create a task management app..."
-                    className="min-w-0 flex-auto rounded-lg border border-mono-border-grey bg-mono-sidebar-bg px-3.5 py-2 text-mono-white shadow-sm placeholder:text-mono-medium-grey focus:ring-2 focus:ring-inset focus:ring-mono-accent-blue sm:text-sm sm:leading-6"
-                    autoComplete="off"
-                    required
-                  />
-                  <button
-                    type="submit"
-                    className="flex-none rounded-lg bg-mono-accent-blue px-3.5 py-2.5 text-sm font-semibold text-mono-white shadow-sm hover:bg-mono-accent-blue/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mono-accent-blue min-w-[5rem] cursor-pointer"
-                    aria-label="Build project"
-                  >
-                    Build
-                  </button>
-                </div>
-              </form>
-
-              {!prompt.trim() && !error && (
-                <p className="mt-3 text-sm text-mono-medium-grey">
-                  Type a short description above (e.g. &quot;todo app&quot;) then click Build.
-                </p>
-              )}
-              {error && (
-                <p
-                  role="alert"
-                  className="mt-4 text-sm text-mono-destructive-red"
-                  style={{ color: '#ef4444', marginTop: '1rem', padding: '0.75rem', background: '#1a1a1a', borderRadius: '6px', border: '1px solid #ef4444' }}
-                >
-                  {error}
-                </p>
-              )}
-              {redirectLink && (
-                <p className="mt-4 text-sm" style={{ marginTop: '1rem', padding: '0.75rem', background: '#0f172a', borderRadius: '6px', border: '1px solid #3b82f6' }}>
-                  <span style={{ color: '#94a3b8' }}>Project created. </span>
-                  <a href={redirectLink} style={{ color: '#3b82f6', fontWeight: 600 }}>Open in IDE →</a>
-                </p>
-              )}
-              <p className="mt-3 text-xs text-mono-medium-grey">
-                If Build does nothing, use the <a href="/build" style={{ color: '#3b82f6' }}>simple build page</a>.
-              </p>
-            </div>
-
-            {/* Feature highlights */}
-            <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-3">
-              <div className="flex flex-col items-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-mono-dark-bg border border-mono-border-grey">
-                  <svg className="h-6 w-6 text-mono-white" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423L16.5 15.75l.394 1.183a2.25 2.25 0 001.423 1.423L19.5 18.75l-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
-                  </svg>
-                </div>
-                <h3 className="mt-4 text-lg font-semibold text-mono-white">AI-Powered</h3>
-                <p className="mt-2 text-sm text-mono-medium-grey">Advanced AI generates complete applications from simple descriptions</p>
-              </div>
-              <div className="flex flex-col items-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-mono-dark-bg border border-mono-border-grey">
-                  <svg className="h-6 w-6 text-mono-white" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
-                  </svg>
-                </div>
-                <h3 className="mt-4 text-lg font-semibold text-mono-white">Full-Stack</h3>
-                <p className="mt-2 text-sm text-mono-medium-grey">Frontend, backend, and database—all generated automatically</p>
-              </div>
-              <div className="flex flex-col items-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-mono-dark-bg border border-mono-border-grey">
-                  <svg className="h-6 w-6 text-mono-white" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-                  </svg>
-                </div>
-                <h3 className="mt-4 text-lg font-semibold text-mono-white">Instant Deploy</h3>
-                <p className="mt-2 text-sm text-mono-medium-grey">Run and deploy your applications with one click</p>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className={styles.sparkleLayer} aria-hidden="true">
+        {sparkleDots.map((dot) => (
+          <span
+            key={dot.id}
+            className={styles.sparkle}
+            style={{
+              left: dot.left,
+              top: dot.top,
+              width: dot.size,
+              height: dot.size,
+              animationDuration: `${dot.duration}s`,
+              animationDelay: `${dot.delay}s`,
+              opacity: dot.opacity,
+            }}
+          />
+        ))}
       </div>
+
+      {partyMode && (
+        <div className={styles.confettiLayer} aria-hidden="true">
+          {confettiPieces.map((piece) => {
+            const style: CSSVars = {
+              left: piece.left,
+              '--piece-color': piece.color,
+              '--delay': piece.delay,
+              '--fall-duration': piece.fallDuration,
+              '--spin-duration': piece.spinDuration,
+              '--drift': piece.drift,
+              '--rotation': piece.rotation,
+            };
+            return <span key={piece.id} className={styles.confettiPiece} style={style} />;
+          })}
+        </div>
+      )}
+
+      <main className={styles.main}>
+        <section className={styles.hero}>
+          <p className={styles.badge}>Immersive 3D Birthday Celebration</p>
+          <h1 className={styles.title}>
+            Happy Birthday <span className={styles.name}>Zeeshan Farhath</span>
+          </h1>
+          <p className={styles.subtitle}>
+            A fun and surprising birthday world with lights, depth, floating balloons, a glowing cake,
+            and interactive celebration effects. Move your pointer on the scene to feel the 3D tilt.
+          </p>
+
+          <div className={styles.buttonRow}>
+            <button type="button" className={styles.primaryButton} onClick={launchSurprise}>
+              {partyMode ? 'Launch bigger surprise' : 'Launch surprise'}
+            </button>
+            <button type="button" className={styles.secondaryButton} onClick={showNextWish}>
+              Show next birthday wish
+            </button>
+          </div>
+
+          <article className={styles.wishCard} aria-live="polite">
+            <p className={styles.wishLabel}>Live birthday wish</p>
+            <p className={styles.wishText}>{wishes[wishIndex]}</p>
+            <div className={`${styles.equalizer} ${partyMode ? styles.equalizerActive : ''}`} aria-hidden="true">
+              {Array.from({ length: 12 }, (_, index) => (
+                <span
+                  key={`bar-${index}`}
+                  className={styles.equalizerBar}
+                  style={{ animationDelay: `${index * 0.08}s` }}
+                />
+              ))}
+            </div>
+          </article>
+        </section>
+
+        <section className={styles.sceneSection}>
+          <div className={styles.sceneViewport} onPointerMove={handleSceneMove} onPointerLeave={resetTilt}>
+            <div className={styles.scene} style={{ transform: `rotateX(${18 + tilt.x}deg) rotateY(${tilt.y}deg)` }}>
+              <div className={styles.floorGlow} />
+
+              <div className={styles.lightBeamLayer} aria-hidden="true">
+                {lightBeams.map((beam) => (
+                  <span
+                    key={beam.id}
+                    className={styles.lightBeam}
+                    style={{
+                      left: beam.left,
+                      animationDelay: beam.delay,
+                      filter: `hue-rotate(${beam.hue}deg)`,
+                    }}
+                  />
+                ))}
+              </div>
+
+              <div className={styles.balloonLayer} aria-hidden="true">
+                {balloons.map((balloon) => {
+                  const style: CSSVars = {
+                    '--balloon-color': balloon.color,
+                    '--balloon-x': balloon.x,
+                    '--balloon-y': balloon.y,
+                    '--balloon-z': balloon.z,
+                    '--balloon-delay': balloon.delay,
+                    '--balloon-duration': balloon.duration,
+                  };
+
+                  return (
+                    <div key={balloon.id} className={styles.balloon} style={style}>
+                      <span className={styles.balloonShine} />
+                      <span className={styles.balloonKnot} />
+                      <span className={styles.balloonString} />
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className={styles.cake}>
+                {cakeLayers.map((layer) => {
+                  const style: CSSVars = {
+                    width: `${layer.width}px`,
+                    height: `${layer.height}px`,
+                    bottom: `${layer.bottom}px`,
+                    '--cake-a': layer.colorA,
+                    '--cake-b': layer.colorB,
+                  };
+
+                  return <div key={layer.id} className={styles.cakeLayer} style={style} />;
+                })}
+
+                <div className={styles.frosting} aria-hidden="true">
+                  {Array.from({ length: 11 }, (_, index) => (
+                    <span
+                      key={`drop-${index}`}
+                      className={styles.frostDrop}
+                      style={{
+                        left: `${6 + index * 8.4}%`,
+                        animationDelay: `${index * 0.12}s`,
+                      }}
+                    />
+                  ))}
+                </div>
+
+                <div className={styles.candleRow} aria-hidden="true">
+                  {[-64, 0, 64].map((offset, index) => {
+                    const style: CSSVars = {
+                      '--x': `${offset}px`,
+                      '--delay': `${index * 0.18}s`,
+                    };
+
+                    return (
+                      <div key={`candle-${offset}`} className={styles.candle} style={style}>
+                        <span className={styles.flame} />
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className={styles.cakePlate} />
+              </div>
+
+              <div className={styles.giftLayer} aria-hidden="true">
+                {gifts.map((gift) => {
+                  const style: CSSVars = {
+                    left: gift.left,
+                    '--gift-a': gift.colorA,
+                    '--gift-b': gift.colorB,
+                    '--gift-ribbon': gift.ribbon,
+                    '--gift-rotate': gift.rotate,
+                    animationDelay: gift.delay,
+                  };
+
+                  return (
+                    <div key={gift.id} className={styles.gift} style={style}>
+                      <span className={styles.giftLid} />
+                      <span className={styles.giftRibbonVertical} />
+                      <span className={styles.giftRibbonHorizontal} />
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className={styles.starRing} aria-hidden="true">
+                {Array.from({ length: 18 }, (_, index) => (
+                  <span
+                    key={`star-${index}`}
+                    className={styles.star}
+                    style={{ transform: `rotate(${index * 20}deg) translateY(-180px)` }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <p className={styles.footerText}>
+          Made with joy to celebrate Zeeshan Farhath with a fun and realistic 3D birthday vibe.
+        </p>
+      </main>
     </div>
   );
 }
