@@ -10,6 +10,8 @@ export default function Navigation() {
 
   const navigation = [
     { name: 'Home', href: '/' },
+    { name: 'Docs', href: '/docs' },
+    { name: 'Studio', href: '/studio' },
     { name: 'Code IDE', href: '/ide' },
     { name: 'Simulation', href: '/simulation' },
     { name: 'Vibe Chat Demo', href: '/vibe-chat-demo' },

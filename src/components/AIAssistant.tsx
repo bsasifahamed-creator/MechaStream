@@ -153,7 +153,9 @@ const AIAssistant: React.FC<AIAssistantProps> = ({
       
       let botResponseText = ''
       
-      if (data.code) {
+      if (!response.ok) {
+        botResponseText = data.error || `Request failed (${response.status}). Make sure Ollama is running (ollama serve) and try again.`
+      } else if (data.code) {
         // Check if the code contains multiple files (has markdown code blocks)
         if (data.code.includes('```') && (data.code.includes('html') || data.code.includes('css') || data.code.includes('javascript'))) {
           // Multi-file response - display as is

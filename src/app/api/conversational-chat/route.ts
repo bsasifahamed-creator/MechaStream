@@ -366,7 +366,7 @@ async function callOllama(messages: Message[], model: string): Promise<ChatRespo
       content: msg.content
     }));
 
-    const ollamaModel = process.env.OLLAMA_CODE_MODEL || 'qwen3:4b';
+    const ollamaModel = process.env.OLLAMA_CODE_MODEL || process.env.OLLAMA_MODEL || 'qwen2.5-coder:7b';
     const ollamaBase = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
     const response = await fetch(`${ollamaBase}/api/chat`, {
       method: 'POST',

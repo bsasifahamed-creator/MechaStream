@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_CODE_MODEL || process.env.OLLAMA_CHAT_MODEL || 'qwen3:4b';
+const OLLAMA_MODEL = process.env.OLLAMA_CODE_MODEL || process.env.OLLAMA_CHAT_MODEL || 'qwen2.5-coder:7b';
+const OLLAMA_TIMEOUT_MS = 180000; // 3 min — Ollama needs time, especially on first inference
 
 interface ConversationMessage {
   role: 'user' | 'assistant' | 'system';
@@ -26,78 +27,88 @@ interface ConversationResponse {
 // Store conversations in memory (in production, use Redis or database)
 const conversations = new Map<string, ConversationMessage[]>();
 
-/** Call Ollama directly so the chatbot works without self-fetch to /api/ai. */
-async function callOllamaForConversation(fullPrompt: string): Promise<string> {
+const CONVERSATION_SYSTEM = `You are MechaStream AI assistant. Help users build web applications.
+When the user asks to create/build something, respond with a brief acknowledgment and set shouldGenerateProject to true.
+You MUST respond in this EXACT JSON format, nothing else:
+{"message": "your response here", "suggestions": ["suggestion1", "suggestion2"], "shouldGenerateProject": false, "projectPrompt": null}
+If the user wants to build something, set shouldGenerateProject to true and projectPrompt to their request.`;
+
+/** Call Ollama /api/chat for conversation (message format; better than /api/generate for chat). */
+async function callOllamaForConversation(messages: ConversationMessage[], lastUserPrompt: string): Promise<string> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25000);
+  const timeoutId = setTimeout(() => controller.abort(), OLLAMA_TIMEOUT_MS);
   try {
-    const res = await fetch(`${OLLAMA_BASE_URL}/api/generate`, {
+    const ollamaMessages = [
+      { role: 'system' as const, content: CONVERSATION_SYSTEM },
+      ...messages.slice(-6).map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+    ];
+    const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: OLLAMA_MODEL,
-        prompt: fullPrompt,
+        messages: ollamaMessages,
         stream: false,
-        options: { temperature: 0.7, num_predict: 1500 },
+        options: { temperature: 0.7, num_predict: 4096 },
       }),
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
     if (!res.ok) return '';
     const data = await res.json().catch(() => ({}));
-    return (data.response || '').trim();
+    let raw = (data?.message?.content ?? data?.response ?? '').trim();
+    raw = raw.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '').trim();
+    return raw;
   } catch (e) {
     clearTimeout(timeoutId);
-    console.error('Ollama conversation error:', e);
+    const isAbort = e instanceof Error && e.name === 'AbortError';
+    if (isAbort) {
+      console.warn('Ollama conversation: request aborted (timeout or client disconnect)');
+    } else {
+      console.error('Ollama conversation error:', e);
+    }
     return '';
   }
 }
 
-function parseConversationJson(raw: string): ConversationResponse | null {
-  if (!raw || !raw.trim()) return null;
+function parseConversationResponse(raw: string, userPrompt: string): ConversationResponse {
+  if (!raw || !raw.trim()) {
+    return {
+      message: "I couldn't generate a response. Start Ollama (ollama serve) and try again.",
+      suggestions: ['Start Ollama and try again', 'Try a shorter message'],
+      shouldGenerateProject: false,
+      projectPrompt: null,
+    };
+  }
   try {
-    const jsonStr = raw.includes('{') ? raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1) : raw;
-    const parsed = JSON.parse(jsonStr);
-    if (parsed && typeof parsed === 'object' && typeof parsed.message === 'string') {
-      return {
-        message: parsed.message,
-        suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
-        shouldGenerateProject: Boolean(parsed.shouldGenerateProject),
-        projectPrompt: typeof parsed.projectPrompt === 'string' ? parsed.projectPrompt : null,
-      };
+    const jsonMatch = raw.match(/\{[\s\S]*"message"[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed && typeof parsed.message === 'string') {
+        return {
+          message: parsed.message,
+          suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
+          shouldGenerateProject: Boolean(parsed.shouldGenerateProject),
+          projectPrompt: typeof parsed.projectPrompt === 'string' ? parsed.projectPrompt : null,
+        };
+      }
     }
   } catch {
-    // use raw as message if it looks like plain text
-    if (raw.length > 0 && raw.length < 2000) {
-      return {
-        message: raw,
-        suggestions: [],
-        shouldGenerateProject: false,
-        projectPrompt: null,
-      };
-    }
+    /* not JSON */
   }
-  return null;
+  const buildKeywords = /\b(create|build|make|generate|design|code|develop)\b/i;
+  const wantsBuild = buildKeywords.test(userPrompt);
+  return {
+    message: raw.length > 6000 ? raw.slice(0, 6000) + '…' : raw.trim(),
+    suggestions: wantsBuild ? ['Generate the code', 'Add more details', 'Pick a different framework'] : ['Tell me more', 'Show me an example'],
+    shouldGenerateProject: wantsBuild,
+    projectPrompt: wantsBuild ? userPrompt : null,
+  };
 }
 
-async function callAIForConversation(messages: ConversationMessage[], isCodeIDE: boolean = false): Promise<ConversationResponse> {
-  const systemPrompt = isCodeIDE
-    ? `You are an expert software developer assistant in a code IDE. Be conversational and helpful. Ask clarifying questions when needed. When the user clearly wants to generate/build something, set shouldGenerateProject=true and set projectPrompt to a detailed one-paragraph description for code generation. Reply ONLY with valid JSON in this exact format: {"message": "your reply", "suggestions": ["option1", "option2"], "shouldGenerateProject": false, "projectPrompt": null}`
-    : `You are a helpful AI for a code generation platform. Guide users through project ideas. When ready to generate, set shouldGenerateProject=true and projectPrompt to a detailed description. Reply ONLY with valid JSON: {"message": "your reply", "suggestions": ["option1", "option2"], "shouldGenerateProject": false, "projectPrompt": null}`;
-
-  const conversationText = messages.map(m => `${m.role}: ${m.content}`).join('\n\n');
-  const fullPrompt = `${systemPrompt}\n\nConversation:\n${conversationText}\n\nRespond with only the JSON object, no other text:`;
-
-  const raw = await callOllamaForConversation(fullPrompt);
-  const parsed = parseConversationJson(raw);
-  if (parsed && parsed.message) return parsed;
-
-  return {
-    message: "I couldn't generate a response. Start Ollama (run `ollama serve` in a terminal) and pull a model (e.g. `ollama pull qwen3:4b`), then try again.",
-    suggestions: ['Start Ollama and try again', 'Try a shorter message', 'Check the terminal for errors'],
-    shouldGenerateProject: false,
-    projectPrompt: null,
-  };
+async function callAIForConversation(messages: ConversationMessage[], _isCodeIDE: boolean, lastUserPrompt: string): Promise<ConversationResponse> {
+  const raw = await callOllamaForConversation(messages, lastUserPrompt);
+  return parseConversationResponse(raw, lastUserPrompt);
 }
 
 export async function POST(request: NextRequest) {
@@ -122,7 +133,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get AI response
-    let aiResponse = await callAIForConversation(conversation, isCodeIDE);
+    let aiResponse = await callAIForConversation(conversation, isCodeIDE, message);
 
     // In Code IDE: if user message asks to build/create something or specifically backend/API, trigger code generation
     const lastUserContent = (message || '').trim();

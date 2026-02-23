@@ -6,7 +6,7 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-const OLLAMA_CODE_MODEL = process.env.OLLAMA_CODE_MODEL || 'qwen3:4b';
+const OLLAMA_CODE_MODEL = process.env.OLLAMA_CODE_MODEL || process.env.OLLAMA_MODEL || 'qwen2.5-coder:7b';
 
 // Validate API keys
 const hasValidGroq = GROQ_API_KEY && GROQ_API_KEY !== 'your_groq_api_key_here';

@@ -29,7 +29,7 @@ export default function HomePage() {
     setIsLoading(true);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 35000);
+    const timeoutId = setTimeout(() => controller.abort(), 200000); // 200s — server can take up to 3 min
 
     try {
       const res = await fetch('/api/generate', {
@@ -62,7 +62,7 @@ export default function HomePage() {
         return;
       }
 
-      const ideUrl = `/ide?project=${encodeURIComponent(projectId)}&prompt=${encodeURIComponent(trimmed)}`;
+      const ideUrl = `/ide?project=${encodeURIComponent(projectId)}&prompt=${encodeURIComponent(trimmed)}&openChat=1`;
       window.location.replace(ideUrl);
       setError(null);
       setTimeout(() => {
@@ -75,7 +75,7 @@ export default function HomePage() {
       clearTimeout(timeoutId);
       if (err instanceof Error) {
         if (err.name === 'AbortError') {
-          setError('Request timed out. Start Ollama (ollama serve) or try a shorter prompt.');
+          setError('Request timed out after several minutes. Make sure Ollama is running (ollama serve) and try again.');
         } else {
           setError(err.message);
         }
@@ -87,18 +87,14 @@ export default function HomePage() {
   };
 
   const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     const trimmed = prompt.trim();
     if (!trimmed) {
-      e.preventDefault();
       setError('Please enter a short description (e.g. "todo app") first.');
       return;
     }
-    e.preventDefault();
-    setError(null);
-    setRedirectLink(null);
-    // Force navigation so output is always generated (avoids form submit being blocked)
-    const url = `/api/generate?prompt=${encodeURIComponent(trimmed)}`;
-    window.location.href = url;
+    // Use POST with loading state so we can wait long enough (server may take 1–3 min)
+    runBuild();
   };
 
   return (
@@ -163,10 +159,11 @@ export default function HomePage() {
                   />
                   <button
                     type="submit"
-                    className="flex-none rounded-lg bg-mono-accent-blue px-3.5 py-2.5 text-sm font-semibold text-mono-white shadow-sm hover:bg-mono-accent-blue/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mono-accent-blue min-w-[5rem] cursor-pointer"
+                    disabled={isLoading}
+                    className="flex-none rounded-lg bg-mono-accent-blue px-3.5 py-2.5 text-sm font-semibold text-mono-white shadow-sm hover:bg-mono-accent-blue/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mono-accent-blue min-w-[5rem] cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                     aria-label="Build project"
                   >
-                    Build
+                    {isLoading ? 'Building… (1–3 min)' : 'Build'}
                   </button>
                 </div>
               </form>
@@ -192,7 +189,7 @@ export default function HomePage() {
                 </p>
               )}
               <p className="mt-3 text-xs text-mono-medium-grey">
-                If Build does nothing, use the <a href="/build" style={{ color: '#3b82f6' }}>simple build page</a>.
+                If you weren&apos;t redirected to the IDE, <a href="/ide" className="text-mono-accent-blue hover:underline">open Code IDE</a> from here or the menu above.
               </p>
             </div>
 

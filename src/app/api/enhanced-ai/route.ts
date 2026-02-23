@@ -626,7 +626,7 @@ async function callEnhancedGoogle(prompt: string): Promise<EnhancedLLMResponse> 
 
 // Enhanced Ollama call (uses Qwen 3 by default via OLLAMA_CODE_MODEL)
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-const OLLAMA_CODE_MODEL = process.env.OLLAMA_CODE_MODEL || 'qwen3:4b';
+const OLLAMA_CODE_MODEL = process.env.OLLAMA_CODE_MODEL || process.env.OLLAMA_MODEL || 'qwen2.5-coder:7b';
 
 async function callEnhancedOllama(prompt: string): Promise<EnhancedLLMResponse> {
   try {

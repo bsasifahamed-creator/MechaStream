@@ -13,7 +13,7 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-const OLLAMA_CODE_MODEL = process.env.OLLAMA_CODE_MODEL || 'qwen3:4b';
+const OLLAMA_CODE_MODEL = process.env.OLLAMA_CODE_MODEL || process.env.OLLAMA_MODEL || 'qwen2.5-coder:7b';
 
 // Validate API keys
 const hasValidGroq = GROQ_API_KEY && GROQ_API_KEY !== 'your_groq_api_key_here';
@@ -28,6 +28,17 @@ interface LLMResponse {
   error?: string;
   source?: string;
   model?: string;
+}
+
+/** Strip <think>/reasoning blocks so they don't break preview/code. Handles Qwen and similar models. */
+function stripThinkBlocks(content: string): string {
+  if (!content || typeof content !== 'string') return content;
+  let out = content
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '')
+    .replace(/```reasoning[\s\S]*?```/gi, '')
+    .trim();
+  return out;
 }
 
 function cleanCodeResponse(content: string): string {
@@ -239,6 +250,106 @@ async function callGoogle(prompt: string): Promise<LLMResponse> {
   }
 }
 
+const REACT_GENERATE_SYSTEM = `You are an expert React/Next.js developer. Generate a COMPLETE, working React component based on the user's description.
+
+CRITICAL RULES:
+- Return ONLY the code. No markdown fences, no \`\`\`jsx, no explanations before or after.
+- Start your response with the first line of code (e.g. "use client" or import React).
+- Use functional components with React hooks.
+- Include ALL necessary imports at the top (import React, useState, useEffect, etc.).
+- Use Tailwind CSS classes for ALL styling.
+- Export the component as default: export default function ComponentName() { ... }
+- Make it visually polished — use proper spacing, colors, rounded corners, shadows.
+- Make it fully interactive and functional.
+- Handle edge cases and loading states.`;
+
+/** Call Ollama /api/chat for React component generation. Uses message format; strips <think> and extracts code. */
+async function callOllamaReactGenerate(prompt: string, existingCode: string, context: string): Promise<LLMResponse> {
+  try {
+    const userMessage = existingCode
+      ? `Current code:\n${existingCode}\n\nUser request: ${prompt}${context ? `\nContext: ${context}` : ''}`
+      : prompt + (context ? `\nContext: ${context}` : '');
+
+    console.log(`[/api/ai] operation=generate, model=${OLLAMA_CODE_MODEL}, prompt length=${userMessage.length}`);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
+
+    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: OLLAMA_CODE_MODEL,
+        messages: [
+          { role: 'system', content: REACT_GENERATE_SYSTEM },
+          { role: 'user', content: userMessage },
+        ],
+        stream: false,
+        options: { temperature: 0.7, num_predict: 8192 },
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[/api/ai] Ollama error', response.status, errorText);
+      return { error: `Ollama returned ${response.status} - ${errorText}` };
+    }
+
+    const data = await response.json();
+    let content = (data?.message?.content ?? data?.response ?? '').trim();
+    if (!content) {
+      console.error('[/api/ai] Ollama empty response. Keys:', data ? Object.keys(data) : 'no data');
+      return { error: 'Ollama returned empty response' };
+    }
+
+    console.log(`[/api/ai] Raw response length: ${content.length}`);
+
+    content = stripThinkBlocks(content);
+    content = content
+      .replace(/^```(?:jsx|tsx|javascript|typescript|react|html|css)?\s*\n?/gm, '')
+      .replace(/\n?```\s*$/gm, '')
+      .trim();
+
+    // If response has explanation text before code, extract from first code-like line
+    const codeStartPatterns = [
+      /^(import\s)/m, /^('use client')/m, /^("use client")/m,
+      /^(export\s)/m, /^(const\s)/m, /^(function\s)/m,
+      /^(export default)/m, /^(return\s*\()/m, /^(React\.)/m,
+      /^(\s*<[A-Z][a-zA-Z]*)/m,
+    ];
+    for (const pattern of codeStartPatterns) {
+      const match = content.match(pattern);
+      if (match && match.index !== undefined && match.index > 0) {
+        content = content.slice(match.index);
+        break;
+      }
+    }
+
+    // Drop trailing explanation after the component (e.g. "Here's how it works...")
+    const lastBracket = content.lastIndexOf('};');
+    if (lastBracket > 100) {
+      const after = content.slice(lastBracket + 2).trim();
+      if (after.length > 0 && !after.startsWith('//') && !/^[\s\S]*\b(import|export|function|const)\b/.test(after)) {
+        content = content.slice(0, lastBracket + 2);
+      }
+    }
+
+    console.log(`[/api/ai] Cleaned code length: ${content.length}`);
+
+    return {
+      code: content,
+      explanation: `Generated using Ollama (${OLLAMA_CODE_MODEL})`,
+      source: 'ollama',
+      model: OLLAMA_CODE_MODEL,
+    };
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    return { error: `Ollama error: ${msg}` };
+  }
+}
+
 async function callOllama(prompt: string): Promise<LLMResponse> {
   try {
     console.log(`🦙 Trying Ollama (${OLLAMA_CODE_MODEL}) for code generation...`);
@@ -290,7 +401,8 @@ User request: ${prompt}`,
     const data = await response.json();
     
     // Ollama returns the response directly in the 'response' field
-    const content = data.response || '';
+    let content = data.response || '';
+    content = stripThinkBlocks(content);
     
     if (!content) {
       return { error: 'Ollama returned empty response' };
@@ -474,7 +586,7 @@ export async function POST(req: NextRequest) {
     fetch('http://127.0.0.1:7242/ingest/fcccba6e-df5d-43f4-b024-9d90a6fa1d56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/ai/route.ts:POST:entry',message:'AI POST entered',data:{hasBody:true},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
     // #endregion
     const body = await req.json();
-    const { prompt, provider = 'fallback', features = [], enableAgenticSearch = false, projectName, isConversation } = body;
+    const { prompt, provider = 'fallback', features = [], enableAgenticSearch = false, projectName, isConversation, operation, type: bodyType, code: existingCode = '', context: codeContext = '' } = body;
     
     if (!prompt) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
@@ -482,6 +594,36 @@ export async function POST(req: NextRequest) {
     
     // Use original prompt without cache busting to avoid rate limits
     const cleanPrompt = prompt;
+
+    // React/component generate: use Ollama /api/generate, return single code string (for IDE / AIAssistant)
+    const isGenerateRequest = operation === 'generate' || bodyType === 'generate';
+    if (isGenerateRequest && typeof cleanPrompt === 'string' && cleanPrompt.trim()) {
+      console.log('[AI] Code gen request, model:', OLLAMA_CODE_MODEL, 'prompt length:', cleanPrompt.length);
+      const ollamaResult = await callOllamaReactGenerate(cleanPrompt.trim(), typeof existingCode === 'string' ? existingCode : '', typeof codeContext === 'string' ? codeContext : '');
+      console.log('[AI] Code gen result:', ollamaResult.code ? `${ollamaResult.code.length} chars` : ollamaResult.error);
+      if (ollamaResult.code && !ollamaResult.error) {
+        return NextResponse.json({
+          code: ollamaResult.code,
+          success: true,
+          operation: 'generate',
+          model: ollamaResult.model || OLLAMA_CODE_MODEL,
+          explanation: ollamaResult.explanation || 'Code generated.',
+          suggestions: ollamaResult.suggestions || [],
+          source: ollamaResult.source || 'ollama',
+          usage: { total_tokens: 0 },
+        });
+      }
+      if (ollamaResult.error) {
+        return NextResponse.json(
+          {
+            error: ollamaResult.error,
+            suggestions: ['Start Ollama (ollama serve) and pull a model (e.g. ollama pull qwen3)', 'Try a shorter prompt'],
+          },
+          { status: 502 }
+        );
+      }
+      // If no code and no error, fall through to multi-provider path
+    }
 
     // Conversation mode: return chat-style JSON (message, suggestions, shouldGenerateProject, projectPrompt) not code
     if (isConversation === true) {
@@ -610,8 +752,8 @@ export async function POST(req: NextRequest) {
     // Always add Ollama as local fallback
     availableApis.push('ollama');
     
-    // Prioritize based on observed reliability (google often succeeds here)
-    const apiPriority = ['google', 'groq', 'openrouter', 'ollama', 'openai'];
+    // Prioritize Ollama first for code gen when running locally (no keys required)
+    const apiPriority = ['ollama', 'google', 'groq', 'openrouter', 'openai'];
     const prioritizedApis = apiPriority.filter(api => availableApis.includes(api));
     
     console.log('Available APIs:', availableApis);
@@ -767,5 +909,25 @@ export async function POST(req: NextRequest) {
       { error: safeMessage },
       { status: 500 }
     );
+  }
+}
+
+/** GET /api/ai — health check and Ollama status */
+export async function GET() {
+  try {
+    const res = await fetch(`${OLLAMA_BASE_URL}/api/tags`);
+    const data = await res.json();
+    return NextResponse.json({
+      status: 'ok',
+      ollama: 'connected',
+      models: data.models?.map((m: { name?: string }) => m.name) || [],
+      activeModel: OLLAMA_CODE_MODEL,
+    });
+  } catch {
+    return NextResponse.json({
+      status: 'error',
+      ollama: 'disconnected',
+      message: 'Cannot reach Ollama at ' + OLLAMA_BASE_URL,
+    }, { status: 503 });
   }
 }

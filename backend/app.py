@@ -2,8 +2,12 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import os
 
+from routes.generate import bp as generate_bp
+
 app = Flask(__name__)
 CORS(app)
+
+app.register_blueprint(generate_bp)
 
 @app.route('/')
 def index():

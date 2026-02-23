@@ -27,6 +27,8 @@ interface Message {
 interface ConversationalChatbotProps {
   isCodeIDE?: boolean;
   onCodeGenerated?: (code: string, projectName?: string) => void;
+  /** Called when a full project was generated (multi-file); IDE can switch to Files and open a file */
+  onProjectGenerated?: (projectName: string, firstFilePath?: string) => void;
   onPromptUpdate?: (prompt: string) => void;
   currentProject?: string;
   onChangeApplied?: () => void;
@@ -38,6 +40,7 @@ interface ConversationalChatbotProps {
 export default function ConversationalChatbot({
   isCodeIDE = false,
   onCodeGenerated,
+  onProjectGenerated,
   onPromptUpdate,
   currentProject,
   onChangeApplied,
@@ -153,7 +156,8 @@ export default function ConversationalChatbot({
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/conversation', {
+      // In IDE: run code generation in parallel with conversation so code appears even if chat is slow
+      const conversationPromise = fetch('/api/conversation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -164,16 +168,112 @@ export default function ConversationalChatbot({
         })
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to get response');
+      let codeGenPromise: Promise<void> | null = null;
+      if (isCodeIDE && onCodeGenerated) {
+        codeGenPromise = (async () => {
+          setMessages(prev => [...prev, {
+            id: `code-gen-start-${Date.now()}`,
+            role: 'assistant',
+            content: '⚙️ Generating code...',
+            timestamp: new Date(),
+          }]);
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 180000); // 3 min — match server timeout
+          try {
+            const codeRes = await fetch('/api/ai', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ prompt: messageText.trim(), operation: 'generate', features: [] }),
+              signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
+            const codeData = await codeRes.json().catch(() => ({}));
+            const code = (codeData.code || '').trim();
+            const success = codeData.success !== false;
+            const isFilesJson = code.trimStart().startsWith('{"files":');
+            // Only treat as "echoed prompt" if it's clearly the same text with no code structure
+            const hasCodeStructure = /import\s|export\s|function\s|const\s|=>\s*\{|<\w+|useState|useEffect|return\s*\(/.test(code);
+            const looksLikePrompt =
+              code.length > 15 &&
+              (code === messageText.trim() || code.startsWith(messageText.trim().slice(0, 60))) &&
+              !hasCodeStructure;
+            if (code && success && !isFilesJson && !looksLikePrompt) {
+              onCodeGenerated(code, currentProject || undefined);
+              if (refreshFiles && currentProject) refreshFiles(currentProject);
+              if (onChangeApplied) onChangeApplied();
+              setMessages(prev => [...prev, {
+                id: `code-${Date.now()}`,
+                role: 'assistant',
+                content: '✅ Code generated and applied to the editor.',
+                timestamp: new Date(),
+              }]);
+            } else if (looksLikePrompt) {
+              setMessages(prev => [...prev, {
+                id: `code-skip-${Date.now()}`,
+                role: 'assistant',
+                content: '⚠️ No valid code was generated (response looked like your prompt). Try "Create a simple React counter" or ensure Ollama is running (ollama serve) with qwen2.5-coder:7b.',
+                timestamp: new Date(),
+              }]);
+            } else if (codeData.error || !codeRes.ok) {
+              setMessages(prev => [...prev, {
+                id: `code-err-${Date.now()}`,
+                role: 'assistant',
+                content: `⚠️ Code generation: ${codeData.error || `HTTP ${codeRes.status}`}. Make sure Ollama is running (ollama serve) and OLLAMA_CODE_MODEL is set (e.g. qwen2.5-coder:7b).`,
+                timestamp: new Date(),
+              }]);
+            } else if (!code && success) {
+              setMessages(prev => [...prev, {
+                id: `code-empty-${Date.now()}`,
+                role: 'assistant',
+                content: '⚠️ No code was returned. The model may still be loading—try again in a moment, or use a shorter prompt like "Create a React counter with + and - buttons".',
+                timestamp: new Date(),
+              }]);
+            }
+          } catch (e) {
+            clearTimeout(timeoutId);
+            setMessages(prev => [...prev, {
+              id: `code-err-${Date.now()}`,
+              role: 'assistant',
+              content: `⚠️ Code generation failed: ${e instanceof Error ? e.message : 'network error'}. (Ollama may need 1–2 min for code.)`,
+              timestamp: new Date(),
+            }]);
+          }
+        })();
       }
 
-      const data = await response.json();
+      // Don't block forever on conversation — race with 65s timeout so UI doesn't stay on "Thinking..."
+      const CONV_TIMEOUT_MS = 65000;
+      let response: Response;
+      let data: { message?: string; suggestions?: string[]; shouldGenerateProject?: boolean; projectPrompt?: string | null };
+      try {
+        response = await Promise.race([
+          conversationPromise,
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Conversation timeout')), CONV_TIMEOUT_MS)
+          ),
+        ]) as Response;
+        if (!response.ok) throw new Error('Failed to get response');
+        data = await response.json();
+      } catch (convErr) {
+        const timeoutMsg = convErr instanceof Error && convErr.message === 'Conversation timeout';
+        const replyText = timeoutMsg
+          ? "Chat is taking longer than expected. Code generation is still running — check the editor in a moment. If nothing appears, ensure Ollama is running (ollama serve) and try again."
+          : (convErr instanceof Error ? convErr.message : 'Request failed.');
+        setMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: replyText,
+          timestamp: new Date(),
+        }]);
+        if (codeGenPromise) await codeGenPromise;
+        return;
+      }
+
       const replyText = typeof data.message === 'string' && data.message.trim()
         ? data.message
         : "I didn't get a response. Try again or make sure Ollama is running (ollama serve).";
 
-      const assistantMessage: Message = {
+      setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: replyText,
@@ -181,12 +281,11 @@ export default function ConversationalChatbot({
         suggestions: data.suggestions,
         shouldGenerateProject: data.shouldGenerateProject,
         projectPrompt: data.projectPrompt
-      };
+      }]);
 
-      setMessages(prev => [...prev, assistantMessage]);
-
-      // Handle project generation
-      if (data.shouldGenerateProject && data.projectPrompt) {
+      if (codeGenPromise) {
+        await codeGenPromise;
+      } else if (data.shouldGenerateProject && data.projectPrompt) {
         await handleProjectGeneration(data.projectPrompt);
       }
 
@@ -205,8 +304,39 @@ export default function ConversationalChatbot({
   };
 
   const handleProjectGeneration = async (projectPrompt: string) => {
+    setMessages(prev => [...prev, {
+      id: `proj-gen-start-${Date.now()}`,
+      role: 'assistant',
+      content: '⚙️ Generating code with AI...',
+      timestamp: new Date(),
+    }]);
     try {
       let files: { path: string; content: string }[] = [];
+
+      // In IDE: prefer single React component from Ollama (operation: 'generate')
+      if (isCodeIDE) {
+        const aiGenerateResponse = await fetch('/api/ai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: projectPrompt, operation: 'generate', features: [] })
+        });
+        if (aiGenerateResponse.ok) {
+          const aiGenerateData = await aiGenerateResponse.json();
+          const singleCode = (aiGenerateData.code || '').trim();
+          if (singleCode && !singleCode.startsWith('{')) {
+            if (onCodeGenerated) onCodeGenerated(singleCode, currentProject || undefined);
+            if (refreshFiles && currentProject) refreshFiles(currentProject);
+            if (onChangeApplied) onChangeApplied();
+            setMessages(prev => [...prev, {
+              id: (Date.now() + 1).toString(),
+              role: 'assistant',
+              content: '✅ Code generated and applied to the editor. Check your active file or App.tsx.',
+              timestamp: new Date()
+            }]);
+            return;
+          }
+        }
+      }
 
       // Try /api/chat first (returns { files })
       const chatResponse = await fetch('/api/chat', {
@@ -281,11 +411,13 @@ export default function ConversationalChatbot({
         localStorage.setItem("generated_files", JSON.stringify(files));
         router.push(`/ide?project=${encodeURIComponent(projectName)}&openChat=1`);
       } else {
-        // Refresh files in IDE
+        // Refresh files in IDE and switch to code view
         if (refreshFiles) refreshFiles(projectName);
         if (onChangeApplied) onChangeApplied();
         if (onCodeGenerated) onCodeGenerated('', projectName);
         if (onPromptUpdate) onPromptUpdate(projectPrompt);
+        const firstPath = files.length > 0 ? files[0].path : undefined;
+        if (onProjectGenerated) onProjectGenerated(projectName, firstPath);
       }
 
     } catch (error) {

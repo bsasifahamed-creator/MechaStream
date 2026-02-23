@@ -316,8 +316,29 @@ function IDEPageContent() {
               isCodeIDE={true}
               currentProject={projectId}
               initialPrompt={initialPrompt}
-              onCodeGenerated={(code, projectName) => {
-                console.log('Code generated:', code, projectName);
+              onCodeGenerated={async (code, projectName) => {
+                if (!code || !code.trim()) return;
+                const targetPath = 'App.tsx';
+                setFileContents((c) => ({ ...c, [targetPath]: code }));
+                setOpenFiles((prev) => {
+                  const exist = prev.filter((f) => f.path !== targetPath);
+                  return [...exist, { path: targetPath, content: code }];
+                });
+                setSelectedPath(targetPath);
+                try {
+                  await fetch('/api/files/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ projectId, path: targetPath, content: code }),
+                  });
+                } catch (_) {}
+                refreshTree();
+              }}
+              onProjectGenerated={(projectName, firstFilePath) => {
+                if (projectName !== projectId) return;
+                setSidebarView('files');
+                setTreeKey((k) => k + 1);
+                if (firstFilePath) loadFile(firstFilePath);
               }}
               onPromptUpdate={(prompt) => {
                 console.log('Prompt updated:', prompt);

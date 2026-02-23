@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import ConditionalNavLayout from '@/components/ConditionalNavLayout'
+import { ProjectProvider } from '@/contexts/ProjectContext'
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' })
 
@@ -58,7 +59,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
       </head>
       <body className={inter.className} suppressHydrationWarning style={{ backgroundColor: '#0b1220', color: '#fff', minHeight: '100vh' }}>
-        <ConditionalNavLayout>{children}</ConditionalNavLayout>
+        <ProjectProvider>
+          <ConditionalNavLayout>{children}</ConditionalNavLayout>
+        </ProjectProvider>
         <Toaster 
           position="top-right"
           toastOptions={{
